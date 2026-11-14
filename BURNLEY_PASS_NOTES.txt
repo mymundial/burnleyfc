@@ -1,0 +1,13 @@
+Burnley FC visual refinement pass (14 Nov 2026)
+
+- Wordmark scaled to 60% of the top-bar height (previously 76%).
+- Crowd art exported at 1920 x 1080 px and displayed with background-size: cover.
+  This prevents side gaps; the playable window clips the excess automatically.
+- Purple outlines removed from power and accuracy meter housing and ideal zone.
+- Non-scoreboard UI switched from National 2 Compressed Black Italic (900)
+  to Bold Italic (700), with larger commentary and main button text.
+- IntoDotMatrix scoreboard unaffected.
+- All game mechanics, goal, pitch and control placement unchanged.
+
+Fonts: keep your supplied National 2 font archive in Downloads, as with the prior
+version; the existing automatic local font connection remains in place.
