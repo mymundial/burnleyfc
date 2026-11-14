@@ -1,0 +1,19 @@
+{
+  "name": "EFL Trophy Final",
+  "short_name": "EFL Trophy",
+  "icons": [
+    {
+      "src": "/efl-trophy-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/efl-trophy-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0B2545",
+  "background_color": "#0B2545",
+  "display": "standalone"
+}
