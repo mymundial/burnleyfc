@@ -276,21 +276,25 @@ export function CompetitionLeaderboardModal({ leaderboard, submitState, currentS
     score: currentScore?.points ?? null,
   };
   const topRows = fivePlaceLeaderboard(leaderboard?.top5);
+  const submitting = submitState === "submitting";
   return <ModalFrame label="Matchday competition leaderboard">
     <ModalHeader title="LEADERBOARD" onClose={onHome} />
-    <div className="max-h-[calc(100dvh-198px)] space-y-2 overflow-y-auto pb-0">
-      <LeaderboardSection title="MY RANKING">
-        <LeaderboardHeader />
-        <LeaderboardRow row={ownRow} isUser />
-      </LeaderboardSection>
-      <LeaderboardSection title="TOP 5">
-        <LeaderboardHeader />
-        <div className="space-y-1.5">
-          {topRows.map((row) => <LeaderboardRow key={row.rank} row={row} isUser={Boolean(row.isUser)} />)}
-        </div>
-      </LeaderboardSection>
+    <div className="relative max-h-[calc(100dvh-198px)] overflow-y-auto pb-0">
+      {/* Keep both sections in the layout while saving so the modal does not resize or re-centre. */}
+      <div className={`space-y-2 ${submitting ? "invisible" : ""}`} aria-hidden={submitting}>
+        <LeaderboardSection title="MY RANKING">
+          <LeaderboardHeader />
+          <LeaderboardRow row={ownRow} isUser />
+        </LeaderboardSection>
+        <LeaderboardSection title="TOP 5">
+          <LeaderboardHeader />
+          <div className="space-y-1.5">
+            {topRows.map((row) => <LeaderboardRow key={row.rank} row={row} isUser={Boolean(row.isUser)} />)}
+          </div>
+        </LeaderboardSection>
+      </div>
+      {submitting && <div role="status" aria-live="polite" className="pointer-events-none absolute inset-0 flex items-center justify-center text-center home-copy-bold text-[11px] uppercase text-[#F7D117]">SUBMITTING YOUR SCORE...</div>}
     </div>
-    {submitState === "submitting" && <p aria-live="polite" className="mt-2 text-center home-copy-bold text-[11px] uppercase text-[#F7D117]">SUBMITTING YOUR SCORE...</p>}
     {submitState === "error" && <div className="mt-2 text-center"><p role="alert" className="home-copy-bold text-[12px] uppercase text-[#F7D117]">SCORE NOT SUBMITTED · CHECK YOUR CONNECTION</p><button type="button" onClick={onRetry} className="mt-2 home-copy-bold text-[12px] uppercase text-[#F5F1E8] underline">RETRY SUBMISSION</button></div>}
     <button type="button" onClick={onReplay} className={`${BLUE_BUTTON} mt-2`}>REPLAY</button>
   </ModalFrame>;
