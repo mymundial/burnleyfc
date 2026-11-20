@@ -5,7 +5,7 @@ import handler, { buildLeaderboard } from "../api/competition.js";
 
 const stores = Object.fromEntries([
   "burnleyMatchdayParticipants", "burnleyMatchdayUsernames", "burnleyMatchdaySubmissions",
-  "burnleyMatchdayStatistics", "burnleyMatchdayRequestLimits", "burnleyMatchdayRecoveryLimits",
+  "burnleyMatchdayStatistics", "burnleyMatchdayRequestLimits",
 ].map((collection) => [collection, new Map()]));
 const keys = generateKeyPairSync("rsa", { modulusLength: 2048 });
 process.env.FIREBASE_PROJECT_ID = "test-matchday";
@@ -30,7 +30,9 @@ const fire = async (url, request = {}) => {
     let result;
     if (parsed.pathname.endsWith("sendOobCode")) { emailSends++; result = { email: body.email }; }
     else if (parsed.pathname.endsWith("signInWithEmailLink") && body.oobCode === "valid-code") result = { email: body.email, idToken: "verified-id-token", localId: "verified-account" };
-    else return { ok: false, status: 400, json: async () => ({ error: { message: "Invalid code" } }) };
+    else if (parsed.pathname.endsWith("signInWithEmailLink") && body.oobCode === "expired-code") return { ok: false, status: 400, json: async () => ({ error: { message: "EXPIRED_OOB_CODE" } }) };
+    else if (parsed.pathname.endsWith("signInWithEmailLink") && body.oobCode === "mismatch-code") return { ok: false, status: 400, json: async () => ({ error: { message: "EMAIL_MISMATCH" } }) };
+    else return { ok: false, status: 400, json: async () => ({ error: { message: "INVALID_OOB_CODE" } }) };
     return { ok: true, status: 200, json: async () => result };
   }
   const after = parsed.pathname.split("/documents")[1] || "";
@@ -150,10 +152,20 @@ test("email verification recovers original account, updates username, and preser
   assert.equal(start.code, 200);
   assert.equal(emailSends, 1);
   assert.ok(!JSON.stringify(start.data).includes("jerry@example.com"));
+  const resent = await invoke("POST", { action: "recoveryStart", username: "JERRYNEW", email: "jerry@example.com" });
+  assert.equal(resent.code, 200);
+  assert.equal(emailSends, 2); // No silent 90-second suppression.
   const unknown = await invoke("POST", { action: "recoveryStart", username: "UNKNOWN", email: "unknown@example.com" });
   assert.equal(unknown.code, 200);
-  assert.equal(emailSends, 1);
+  assert.equal(emailSends, 2);
+  const expiredCode = await invoke("POST", { action: "recoveryFinish", username: "JERRYNEW", email: "jerry@example.com", oobCode: "expired-code" });
+  assert.equal(expiredCode.code, 401);
+  assert.equal(expiredCode.data.error, "EMAIL LINK EXPIRED");
+  const mismatch = await invoke("POST", { action: "recoveryFinish", username: "JERRYNEW", email: "jerry@example.com", oobCode: "mismatch-code" });
+  assert.equal(mismatch.code, 401);
+  assert.equal(mismatch.data.error, "EMAIL DOES NOT MATCH LINK");
   const wrongCode = await invoke("POST", { action: "recoveryFinish", username: "JERRYNEW", email: "jerry@example.com", oobCode: "bad-code" });
+  assert.equal(wrongCode.data.error, "INVALID EMAIL LINK");
   assert.notEqual(wrongCode.code, 200);
   const recovery = await invoke("POST", { action: "recoveryFinish", username: "JERRYNEW", email: "jerry@example.com", oobCode: "valid-code" });
   assert.equal(recovery.code, 200);

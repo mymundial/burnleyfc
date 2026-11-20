@@ -8,7 +8,6 @@ const HANDLES = "burnleyMatchdayUsernames";
 const SUBMISSIONS = "burnleyMatchdaySubmissions";
 const STATISTICS = "burnleyMatchdayStatistics";
 const LIMITS = "burnleyMatchdayRequestLimits";
-const RECOVERY_LIMITS = "burnleyMatchdayRecoveryLimits";
 let cachedAccessToken = null;
 let cachedTokenExpiry = 0;
 let cachedTokenKey = "";
@@ -286,21 +285,26 @@ async function authRequest(action, body) {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw issue(action === "signInWithEmailLink" && response.status < 500 ? "INVALID EMAIL LINK" : "EMAIL RECOVERY UNAVAILABLE", action === "signInWithEmailLink" && response.status < 500 ? 401 : 503);
-  return data;
-}
-async function acquireRecoveryCooldown(id) {
-  for (let tries = 0; tries < 5; tries++) {
-    const row = await readDocument(RECOVERY_LIMITS, id);
-    const now = Date.now();
-    if (row && Number(row.nextAllowedAt) > now) return false;
-    const data = { nextAllowedAt: now + 90_000 };
-    try {
-      await firestore("POST", ":commit", { writes: [row ? updateWrite(RECOVERY_LIMITS, id, data, row.__updateTime) : createWrite(RECOVERY_LIMITS, id, data)] });
-      return true;
-    } catch (error) { if (!isConflict(error)) throw error; }
+  if (!response.ok) {
+    // Distinguish an expired/used link from other Firebase configuration or
+    // service failures. Never log email addresses, action codes or ID tokens.
+    const providerReason = String(data?.error?.message || "").split(":")[0].trim();
+    console.warn("Firebase recovery request rejected", {
+      action,
+      status: response.status,
+      reason: /^[A-Z0-9_]+$/.test(providerReason) ? providerReason : "UNCLASSIFIED",
+    });
+    if (action === "signInWithEmailLink" && response.status < 500) {
+      if (providerReason === "EXPIRED_OOB_CODE") throw issue("EMAIL LINK EXPIRED", 401);
+      if (providerReason === "EMAIL_MISMATCH") throw issue("EMAIL DOES NOT MATCH LINK", 401);
+      if (providerReason === "INVALID_OOB_CODE") throw issue("INVALID EMAIL LINK", 401);
+      if (providerReason === "TOO_MANY_ATTEMPTS_TRY_LATER") throw issue("TOO MANY REQUESTS. PLEASE TRY LATER", 429);
+      if (providerReason === "OPERATION_NOT_ALLOWED" || providerReason === "INVALID_API_KEY") throw issue("EMAIL RECOVERY UNAVAILABLE", 503);
+      throw issue("INVALID EMAIL LINK", 401);
+    }
+    throw issue("EMAIL RECOVERY UNAVAILABLE", 503);
   }
-  return false;
+  return data;
 }
 async function sendRecoveryLink(email, desiredUsername) {
   // Do not generate links for unregistered addresses. Always return the same
@@ -308,7 +312,6 @@ async function sendRecoveryLink(email, desiredUsername) {
   const id = emailId(email);
   const person = await readDocument(PEOPLE, id);
   if (!person || person.fixture !== config().fixture) return;
-  if (!(await acquireRecoveryCooldown(id))) return;
   const { publicUrl } = authConfig();
   const next = new URL(publicUrl);
   next.searchParams.set("recoveryUsername", desiredUsername);
@@ -344,8 +347,8 @@ export function buildLeaderboard(attempts, participant = null) {
 }
 function sendError(res, error) {
   const status = Number(error?.status) >= 400 && Number(error.status) < 600 ? Number(error.status) : 503;
-  const allowed = ["USERNAME ALREADY TAKEN", "EMAIL ADDRESS ALREADY REGISTERED", "COMPETITION NOT OPEN", "COMPETITION CLOSED", "VALID USERNAME REQUIRED", "RECOVERY EXPIRED", "INVALID EMAIL LINK", "TOO MANY REQUESTS. PLEASE TRY LATER", "FIVE VALID PENALTIES REQUIRED", "VALID USERNAME AND EMAIL REQUIRED"];
-  const message = status === 401 ? (["RECOVERY EXPIRED", "INVALID EMAIL LINK"].includes(error.message) ? error.message : "ENTRY EXPIRED OR NOT REGISTERED") : allowed.includes(error.message) ? error.message : status === 503 ? "COMPETITION SERVICE UNAVAILABLE" : "REQUEST FAILED";
+  const allowed = ["USERNAME ALREADY TAKEN", "EMAIL ADDRESS ALREADY REGISTERED", "COMPETITION NOT OPEN", "COMPETITION CLOSED", "VALID USERNAME REQUIRED", "RECOVERY EXPIRED", "INVALID EMAIL LINK", "EMAIL LINK EXPIRED", "EMAIL DOES NOT MATCH LINK", "TOO MANY REQUESTS. PLEASE TRY LATER", "FIVE VALID PENALTIES REQUIRED", "VALID USERNAME AND EMAIL REQUIRED"];
+  const message = status === 401 ? (["RECOVERY EXPIRED", "INVALID EMAIL LINK", "EMAIL LINK EXPIRED", "EMAIL DOES NOT MATCH LINK"].includes(error.message) ? error.message : "ENTRY EXPIRED OR NOT REGISTERED") : allowed.includes(error.message) ? error.message : status === 503 ? "COMPETITION SERVICE UNAVAILABLE" : "REQUEST FAILED";
   return res.status(status).json({ error: message });
 }
 export default async function handler(req, res) {

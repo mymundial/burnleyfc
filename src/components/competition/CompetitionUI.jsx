@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MC_SELECTION_LAYOUT } from "../../styles/theme.js";
 import { fivePlaceLeaderboard } from "../../logic/leaderboardDisplay.js";
 import CompetitionTerms from "./CompetitionTerms.jsx";
@@ -9,6 +9,7 @@ const PANEL_BACKGROUND = {
   backgroundColor: "#4C183B",
   backgroundImage: "linear-gradient(180deg,#561A42 0%,#4C183B 52%,#320F27 100%)",
 };
+const RECOVERY_ERROR_HOLD_MS = 3000;
 const INNER = "rounded-[1.35rem] border border-[#F5F1E8]/14 bg-[#21091B]/30 p-2.5 text-[#F5F1E8] shadow-[inset_0_1px_0_rgba(245,241,232,0.06)]";
 
 function CloseIcon() {
@@ -90,6 +91,11 @@ export function CompetitionRegistrationModal({ onClose, onRegister, onStartRecov
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [fieldError, setFieldError] = useState(null);
+  useEffect(() => {
+    if (!error) return undefined;
+    const timeout = setTimeout(() => setError(""), RECOVERY_ERROR_HOLD_MS);
+    return () => clearTimeout(timeout);
+  }, [error]);
   const validUsername = /^[A-Z0-9]{1,12}$/.test(username.trim());
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && email.trim().length <= 254;
   const formReady = validUsername && validEmail && termsAccepted;
@@ -125,12 +131,13 @@ export function CompetitionRegistrationModal({ onClose, onRegister, onStartRecov
     return <ModalFrame label="Recover competition entry">
       <ModalHeader title="WELCOME BACK" onClose={onClose} />
       <div className="flex flex-col gap-2">
-        <div className={`${INNER} flex flex-col gap-2 p-4 text-center home-copy-bold text-[17px] uppercase leading-tight text-[#F5F1E8]/60`}>
-          {view === "recovery" ? <><p>AN ACCOUNT ALREADY EXISTS WITH THIS EMAIL ADDRESS.</p><p>VERIFY YOUR EMAIL TO CONTINUE.</p></>
-            : <p>IF AN ACCOUNT EXISTS, WE'VE SENT A SIGN-IN LINK. CHECK YOUR EMAIL AND FOLLOW THE LINK.</p>}
+        <div className={`${INNER} flex flex-col gap-2 p-4 text-center home-copy-bold uppercase leading-tight`}>
+          {view === "recovery" ? <>
+            <p className="text-[17px] text-[#F5F1E8]/60">AN ACCOUNT ALREADY EXISTS WITH THIS EMAIL ADDRESS</p>
+            <p className="text-[clamp(21px,6vw,28px)] text-[#F5F1E8]">VERIFY YOUR EMAIL TO CONTINUE</p>
+          </> : <p className="text-[17px] text-[#F5F1E8]/60">IF AN ACCOUNT EXISTS, WE'VE SENT A SIGN-IN LINK. CHECK YOUR EMAIL AND FOLLOW THE LINK.</p>}
         </div>
-        {view === "recovery" && <button type="button" onClick={handleRecovery} disabled={saving} className={BLUE_BUTTON}>{saving ? "SENDING..." : "SEND SIGN-IN LINK"}</button>}
-        {error && <p role="alert" className="home-copy-bold text-center text-[12px] uppercase text-[#F7D117]">{error}</p>}
+        {view === "recovery" && <button type="button" onClick={handleRecovery} disabled={saving} className={`${BLUE_BUTTON} ${error ? "text-[clamp(12px,2.6vw,16px)]" : ""}`} aria-live="polite">{saving ? "SENDING..." : error || "SEND SIGN-IN LINK"}</button>}
         <button type="button" onClick={() => { setView("entry"); setError(""); setEmail(""); }} className="home-copy-bold self-center text-center text-[13px] uppercase text-[#8FD0F2] underline underline-offset-[3px]">USE DIFFERENT EMAIL</button>
       </div>
     </ModalFrame>;
@@ -174,6 +181,11 @@ export function CompetitionRecoveryLinkModal({ link, onFinish, onRename, onClose
   const [verifiedTicket, setVerifiedTicket] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!error) return undefined;
+    const timeout = setTimeout(() => setError(""), RECOVERY_ERROR_HOLD_MS);
+    return () => clearTimeout(timeout);
+  }, [error]);
   const submit = async (event) => {
     event.preventDefault();
     if (busy) return;
@@ -185,7 +197,7 @@ export function CompetitionRecoveryLinkModal({ link, onFinish, onRename, onClose
         : await onFinish({ username, email: email.toLowerCase().trim(), oobCode: link.oobCode });
       if (result?.needsUsername) {
         setVerifiedTicket(result.recoveryTicket);
-        setError("USERNAME ALREADY TAKEN. CHOOSE ANOTHER.");
+        setError("USERNAME ALREADY TAKEN");
       }
     } catch (cause) { setError(String(cause?.message || "RECOVERY FAILED. PLEASE TRY AGAIN").toUpperCase()); }
     finally { setBusy(false); }
@@ -195,11 +207,10 @@ export function CompetitionRecoveryLinkModal({ link, onFinish, onRename, onClose
     <form onSubmit={submit} className="flex flex-col gap-3">
       <div className={`${INNER} flex flex-col gap-2 p-3`}>
         <p className="home-copy-bold text-center text-[17px] uppercase text-[#F5F1E8]/60">{verifiedTicket ? "CHOOSE A NEW USERNAME" : "CONFIRM YOUR EMAIL TO CONTINUE"}</p>
-        <FormInput icon={<StarIcon />} type="text" aria-label="Username" placeholder="USERNAME" value={username} onChange={(event) => setUsername(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12))} required maxLength={12} />
-        {!verifiedTicket && <FormInput icon={<AtIcon />} type="email" aria-label="Email address" placeholder="EMAIL ADDRESS" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" />}
+        <FormInput icon={<StarIcon />} type="text" aria-label="Username" placeholder="USERNAME" value={username} onChange={(event) => { setUsername(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12)); setError(""); }} required maxLength={12} />
+        {!verifiedTicket && <FormInput icon={<AtIcon />} type="email" aria-label="Email address" placeholder="EMAIL ADDRESS" value={email} onChange={(event) => { setEmail(event.target.value); setError(""); }} required autoComplete="email" />}
       </div>
-      {error && <p role="alert" className="home-copy-bold text-center text-[12px] uppercase text-[#F7D117]">{error}</p>}
-      <button type="submit" disabled={busy || !/^[A-Z0-9]{1,12}$/.test(username) || (!verifiedTicket && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))} className={BLUE_BUTTON}>{busy ? "VERIFYING..." : verifiedTicket ? "CONTINUE" : "VERIFY EMAIL & CONTINUE"}</button>
+      <button type="submit" disabled={busy || !/^[A-Z0-9]{1,12}$/.test(username) || (!verifiedTicket && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))} className={`${BLUE_BUTTON} ${error ? "text-[clamp(12px,2.6vw,16px)]" : ""}`} aria-live="polite">{busy ? "VERIFYING..." : error || (verifiedTicket ? "CONTINUE" : "VERIFY EMAIL")}</button>
     </form>
   </ModalFrame>;
 }
