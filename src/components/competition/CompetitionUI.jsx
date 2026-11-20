@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { MC_SELECTION_LAYOUT } from "../../styles/theme.js";
 import { fivePlaceLeaderboard } from "../../logic/leaderboardDisplay.js";
-import { MATCHDAY_MAX_POINTS } from "../../logic/matchdayScoring.js";
 import CompetitionTerms from "./CompetitionTerms.jsx";
 
 const BURNLEY_CREST = "/assets/branding/burnley-club-logo.png";
@@ -224,7 +223,7 @@ export function CompetitionAvailabilityModal({ status, startAt, endAt, leaderboa
   </ModalFrame>;
 }
 
-const LB_GRID = "50px minmax(0,1fr) 67px";
+const LB_GRID = "20% 60% 20%";
 const LB_TEXT = "home-copy-bold text-[clamp(10px,2.9vw,12px)] uppercase leading-none tracking-[0.02em]";
 function LeaderboardSection({ title, children }) {
   return <div className={INNER}>
@@ -233,28 +232,27 @@ function LeaderboardSection({ title, children }) {
   </div>;
 }
 function LeaderboardHeader() {
-  return <div className="grid items-center gap-[3px] px-1.5 pb-1.5 text-center home-copy-bold text-[8px] uppercase leading-none tracking-[0.055em]" style={{ gridTemplateColumns: LB_GRID }}>
+  return <div className="grid items-center gap-0 px-1.5 pb-1.5 text-center home-copy-bold text-[8px] uppercase leading-none tracking-[0.055em]" style={{ gridTemplateColumns: LB_GRID }}>
     <span>RANK</span><span className="text-center">USERNAME</span><span>SCORE</span>
   </div>;
 }
-function LeaderboardRow({ row, isUser = false, podiumFirst = false }) {
+function LeaderboardRow({ row, isUser = false }) {
   const rank = Number(row?.rank) || null;
-  const hasPodiumBorder = podiumFirst && rank >= 1 && rank <= 3;
-  const highlightUser = isUser && !hasPodiumBorder;
-  // Identical medal border colours, rings and row geometry to Monday Cup.
-  const border = highlightUser ? "border-[#F7D117]/82 ring-1 ring-[#F7D117]/34"
-    : rank === 1 ? "border-[#B98224]/88 ring-1 ring-[#D99A2B]/26"
+  // Podium colours apply to MY RANKING and TOP 5 alike. A user outside
+  // the podium gets cyan in either section (including TOP 5 places 4/5).
+  const border = rank === 1 ? "border-[#B98224]/88 ring-1 ring-[#D99A2B]/26"
     : rank === 2 ? "border-[#C8C8C8]/80 ring-1 ring-[#F5F1E8]/28"
     : rank === 3 ? "border-[#CD7F32]/80 ring-1 ring-[#CD7F32]/30"
+    : isUser ? "border-[#8FD0F2]/88 ring-1 ring-[#8FD0F2]/34"
     : "border-[#F5F1E8]/14 ring-1 ring-[#F5F1E8]/10";
-  const rankColor = rank === 1 && hasPodiumBorder ? "text-[#D99A2B]"
-    : rank === 2 && hasPodiumBorder ? "text-[#C8C8C8]"
-    : rank === 3 && hasPodiumBorder ? "text-[#CD7F32]"
-    : isUser ? "text-[#F7D117]"
+  const rankColor = rank === 1 ? "text-[#D99A2B]"
+    : rank === 2 ? "text-[#C8C8C8]"
+    : rank === 3 ? "text-[#CD7F32]"
+    : isUser ? "text-[#8FD0F2]"
     : "text-white";
-  return <div className={`grid h-[40px] items-center gap-[3px] rounded-[1.05rem] border bg-[#21091B]/58 px-1.5 py-0 text-[#F5F1E8] shadow-[0_6px_14px_rgba(0,0,0,0.10)] ${border}`} style={{ gridTemplateColumns: LB_GRID }}>
+  return <div className={`grid h-[40px] items-center gap-0 rounded-[1.05rem] border bg-[#21091B]/58 px-1.5 py-0 text-[#F5F1E8] shadow-[0_6px_14px_rgba(0,0,0,0.10)] ${border}`} style={{ gridTemplateColumns: LB_GRID }}>
     <div className={`flex h-full min-w-0 items-center justify-center ${LB_TEXT} ${rankColor}`}>#{rank || "--"}</div>
-    <div className={`flex h-full min-w-0 items-center justify-center truncate text-center ${LB_TEXT} ${isUser ? "text-[#F7D117]" : "text-[#F5F1E8]"}`}>{row?.username || "—"}</div>
+    <div className={`flex h-full min-w-0 items-center justify-center truncate text-center ${LB_TEXT} text-white`}>{row?.username || "—"}</div>
     <div className={`flex h-full min-w-0 items-center justify-center tabular-nums ${LB_TEXT} text-[#F7D117]`}>{row?.score !== null && row?.score !== undefined && Number.isFinite(Number(row.score)) ? row.score : "—"}</div>
   </div>;
 }
@@ -276,13 +274,12 @@ export function CompetitionLeaderboardModal({ leaderboard, submitState, currentS
       <LeaderboardSection title="TOP 5">
         <LeaderboardHeader />
         <div className="space-y-1.5">
-          {topRows.map((row) => <LeaderboardRow key={row.rank} row={row} isUser={Boolean(row.isUser)} podiumFirst />)}
+          {topRows.map((row) => <LeaderboardRow key={row.rank} row={row} isUser={Boolean(row.isUser)} />)}
         </div>
       </LeaderboardSection>
     </div>
     {submitState === "submitting" && <p aria-live="polite" className="mt-2 text-center home-copy-bold text-[11px] uppercase text-[#F7D117]">SUBMITTING YOUR SCORE...</p>}
     {submitState === "error" && <div className="mt-2 text-center"><p role="alert" className="home-copy-bold text-[12px] uppercase text-[#F7D117]">SCORE NOT SUBMITTED · CHECK YOUR CONNECTION</p><button type="button" onClick={onRetry} className="mt-2 home-copy-bold text-[12px] uppercase text-[#F5F1E8] underline">RETRY SUBMISSION</button></div>}
-    {submitState === "saved" && <p className="mt-1 text-center home-copy-bold text-[10px] uppercase tracking-[0.06em] text-[#F5F1E8]/70">BEST SCORE / {MATCHDAY_MAX_POINTS}</p>}
     <button type="button" onClick={onReplay} className={`${BLUE_BUTTON} mt-2`}>REPLAY</button>
   </ModalFrame>;
 }
