@@ -1,15 +1,9 @@
-Expected font folders after extraction:
+Font assets used by this prototype:
 
-public/fonts/intodotmatrix/
-- intodotmatrix-webfont.woff2
-- intodotmatrix-webfont.woff
+- `national2/TestNational2Compressed-BoldItalic.otf` — interface and commentary
+- `national2/TestNational2Compressed-BlackItalic.otf` — optional legacy weight
+- `intodotmatrix-webfont.woff2` — scoreboard
 
-public/fonts/sumpfdeutschensportschriftsdin/
-- sumpfdeutschensportschriftsdin-light-webfont.woff2
-- sumpfdeutschensportschriftsdin-light-webfont.woff
-- sumpfdeutschensportschriftsdin-regular-webfont.woff2
-- sumpfdeutschensportschriftsdin-regular-webfont.woff
-- sumpfdeutschensportschriftsdin-bold-webfont.woff2
-- sumpfdeutschensportschriftsdin-bold-webfont.woff
-
-Run scripts/install-fonts.sh from the project root after placing the two uploaded webfontkit zips in the project root.
+Other font weights used by `src/index.css` are listed in `FONT_SETUP.md`.
+Keep the font files from your existing working game in these paths. The CSS
+references these paths directly, with no local-file search/install script.
