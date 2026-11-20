@@ -3,7 +3,7 @@
 This pass changes only meter timing and competition scoring, plus one compact score readout on the existing end-match modal.
 
 - Five Burnley regulation penalties count (five × 200 maximum = 1,000).
-- Each stopped power or accuracy meter scores 100 - 2 × abs(round(position) - 50); endpoints 0, centre 100.
+- Each stopped power or accuracy meter uses half-step scoring precision: 100 - 2 × abs(round(position × 2) / 2 - 50); endpoints 0, centre 100. This permits odd integer points (49.5 = 99). The original whole-number meter values continue to control shot outcomes.
 - Goals scored, goals conceded and match outcome have **no effect on points**.
 - Sudden-death shots do **not** add points.
 - Tie-break order: regulation goals scored, accuracy subtotal, then perfect centre hits.

@@ -8,12 +8,17 @@ export const METER_MAX_POINTS = 100;
 export const SHOT_MAX_POINTS = METER_MAX_POINTS * 2;
 export const MATCHDAY_MAX_POINTS = SCORING_SHOTS * SHOT_MAX_POINTS;
 
-/** 0 -> 0, 50 -> 100, 100 -> 0. One integer per displayed stop. */
-export function precisionPoints(value) {
+/** Quantise the tap position to 0.5 increments so every 0–100 point value is possible. */
+export function scoringMeterStop(value) {
   if (value === null || value === undefined || value === "") return 0;
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return 0;
-  const stop = Math.min(100, Math.max(0, Math.round(numeric)));
+  return Math.round(Math.min(100, Math.max(0, numeric)) * 2) / 2;
+}
+
+/** 0 -> 0, 49.5 -> 99, 50 -> 100, 50.5 -> 99, 100 -> 0. */
+export function precisionPoints(value) {
+  const stop = scoringMeterStop(value);
   return Math.max(0, METER_MAX_POINTS - 2 * Math.abs(stop - 50));
 }
 

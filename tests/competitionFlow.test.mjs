@@ -212,3 +212,26 @@ test("rank tie-breaks follow goals then accuracy", () => {
   assert.equal(rank.myRanking.rank, 2);
   assert.equal(rank.top5[0].username, "BOB");
 });
+
+test("half-step meter positions submit odd totals and reject unsupported precision", async () => {
+  const token = (await register("ODDSCORE", "odd@example.com")).data.token;
+  const oddShots = Array.from({ length: 5 }, () => ({ power: 50, accuracy: 50, goal: true }));
+  oddShots[0].power = 49.5;
+  const odd = await invoke("POST", { action: "submit", matchId: randomUUID(), shots: oddShots }, token);
+  assert.equal(odd.code, 200);
+  assert.equal(odd.data.myRanking.score, 999);
+  assert.equal(player("ODDSCORE").bestScore.integerValue, "999");
+  const invalidShots = oddShots.map((shot) => ({ ...shot }));
+  invalidShots[0].power = 49.3;
+  const invalid = await invoke("POST", { action: "submit", matchId: randomUUID(), shots: invalidShots }, token);
+  assert.equal(invalid.code, 400);
+  invalidShots[0].power = "49.5";
+  const wrongType = await invoke("POST", { action: "submit", matchId: randomUUID(), shots: invalidShots }, token);
+  assert.equal(wrongType.code, 400);
+  assert.equal(player("ODDSCORE").matchesCompleted.integerValue, "1");
+  const perfect = await submit(token, 50);
+  assert.equal(perfect.code, 200);
+  assert.equal(player("ODDSCORE").bestScore.integerValue, "1000");
+  assert.equal(player("ODDSCORE").matchesCompleted.integerValue, "2");
+});
+

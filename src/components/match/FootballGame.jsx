@@ -47,7 +47,7 @@ import { getPodiumBadgeVisuals } from "../../logic/matchVisuals.js";
 import { PODIUM_BADGE_MODE } from "../../logic/resultStatus.js";
 import { playerCareerStarRating } from "../../logic/playerCareer.js";
 import { meterValueAtTime } from "../../logic/meterTiming.js";
-import { precisionPoints, scoreMatchdayAttempts, SCORING_SHOTS } from "../../logic/matchdayScoring.js";
+import { precisionPoints, scoringMeterStop, scoreMatchdayAttempts, SCORING_SHOTS } from "../../logic/matchdayScoring.js";
 
 import { ControlOverlay, Pitch, TemporaryMatchButtons } from "./FootballGameView.jsx";
 import { CompetitionHomeOverlay } from "../competition/CompetitionUI.jsx";
@@ -91,6 +91,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   const [powerValue, setPowerValue] = useState(0);
   const [powerCharging, setPowerCharging] = useState(false);
   const [lockedPower, setLockedPower] = useState(null);
+  const lockedPowerScoringRef = useRef(null);
   const [accuracyValue, setAccuracyValue] = useState(0);
   const [accuracyRunning, setAccuracyRunning] = useState(false);
   const [accuracySweepMs, setAccuracySweepMs] = useState(DEFAULT_ACCURACY_SWEEP_MS);
@@ -291,6 +292,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     powerValueRef.current = 0;
     setPowerCharging(false);
     setLockedPower(null);
+    lockedPowerScoringRef.current = null;
     setAccuracyValue(0);
     accuracyValueRef.current = 0;
     setAccuracyRunning(false);
@@ -480,7 +482,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [competitionMode, completedResult, hasCompleted, phase, attempts, score]);
 
-  function commitShot(side, direction, power, currentScore = score, currentAttempts = attempts, plannedKeeperDirection = null, accuracy = null, accuracyOutcome = null) {
+  function commitShot(side, direction, power, currentScore = score, currentAttempts = attempts, plannedKeeperDirection = null, accuracy = null, accuracyOutcome = null, scoringPower = null, scoringAccuracy = null) {
     if (hasCompleted || completionPendingRef.current || matchCompletionDispatchedRef.current) return;
     // Defence in depth: never permit a sixth Competition Mode penalty, even if
     // a stale or delayed callback tries to submit another shot.
@@ -500,6 +502,10 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     const shotNumber = currentAttempts[side].length + 1;
     const safePower = clamp(Number(power) || 0, 0, 100);
     const safeAccuracy = accuracy === null || accuracy === undefined ? null : clamp(Number(accuracy) || 0, 0, 100);
+    // Preserve the whole-number meter outcome for gameplay, while recording the
+    // precise half-step tap positions for the separate competition score.
+    const scoredPower = scoringPower === null ? safePower : scoringMeterStop(scoringPower);
+    const scoredAccuracy = scoringAccuracy === null ? safeAccuracy : scoringMeterStop(scoringAccuracy);
     const humanShot = side === "user" || opponentIsHuman;
     const keeperReadChance = humanShot && safeAccuracy !== null && accuracyOutcome === "onTarget"
       ? accuracyKeeperReadChanceForValue(safeAccuracy, activeCosmetics, playerCareerStars)
@@ -530,13 +536,13 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
       shotResult: resolved.result,
       goal: Boolean(resolved.goal),
       power: safePower,
-      powerValue: safePower,
+      powerValue: scoredPower,
       powerPoints: side === "user" ? meterPoints(safePower, 50) : 0,
       accuracy: safeAccuracy,
-      accuracyValue: safeAccuracy,
+      accuracyValue: scoredAccuracy,
       accuracyPoints: side === "user" ? meterPoints(safeAccuracy, 50) : 0,
       matchdayPoints: side === "user" && shotNumber <= SCORING_SHOTS
-        ? precisionPoints(safePower) + precisionPoints(safeAccuracy) : 0,
+        ? precisionPoints(scoredPower) + precisionPoints(scoredAccuracy) : 0,
       targetZone: isPowerInTargetZone(safePower, activeCosmetics, playerCareerStars),
       accuracyTargetZone: safeAccuracy !== null && isAccuracyInTargetZone(safeAccuracy, activeCosmetics, playerCareerStars),
       accuracyOutcome,
@@ -587,6 +593,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     powerValueRef.current = 0;
     setPowerCharging(false);
     setLockedPower(null);
+    lockedPowerScoringRef.current = null;
     setAccuracyValue(0);
     accuracyValueRef.current = 0;
     setAccuracyRunning(false);
@@ -673,7 +680,9 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
 
     // Sample the elapsed-time marker at the tap, not the last paint frame.
     const tappedAt = performance.now();
-    const finalPower = displayedMeterValue(meterValueAtTime(powerStartMsRef.current, tappedAt, POWER_SWEEP_MS));
+    const rawPower = meterValueAtTime(powerStartMsRef.current, tappedAt, POWER_SWEEP_MS);
+    const finalPower = displayedMeterValue(rawPower);
+    lockedPowerScoringRef.current = competitionMode ? scoringMeterStop(rawPower) : null;
     stopPowerFrame();
     setPowerCharging(false);
     setPowerVisual(finalPower);
@@ -696,7 +705,9 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
 
     // Capture precise tap time, independent of requestAnimationFrame timing.
     const tappedAt = performance.now();
-    const finalAccuracy = displayedMeterValue(meterValueAtTime(accuracyStartMsRef.current, tappedAt, accuracySweepMsRef.current));
+    const rawAccuracy = meterValueAtTime(accuracyStartMsRef.current, tappedAt, accuracySweepMsRef.current);
+    const finalAccuracy = displayedMeterValue(rawAccuracy);
+    const scoredAccuracy = competitionMode ? scoringMeterStop(rawAccuracy) : null;
     stopAccuracyFrame();
     setAccuracyRunning(false);
     setAccuracyVisual(finalAccuracy);
@@ -705,7 +716,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
 
     const finalPower = clamp(lockedPower ?? powerValueRef.current, 0, 100);
     const accuracyOutcome = accuracyOutcomeForValue(finalAccuracy, lockedDirection, activeCosmetics, playerCareerStars);
-    commitShot(opponentIsHuman ? shootingSide : "user", lockedDirection, finalPower, score, attempts, null, finalAccuracy, accuracyOutcome);
+    commitShot(opponentIsHuman ? shootingSide : "user", lockedDirection, finalPower, score, attempts, null, finalAccuracy, accuracyOutcome, lockedPowerScoringRef.current, scoredAccuracy);
   }
 
   useEffect(() => {

@@ -407,7 +407,7 @@ export default async function handler(req, res) {
       requireOpen();
       const id = tokenToId(req.headers.authorization);
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(body.matchId || "")) ||
-          !Array.isArray(body.shots) || body.shots.length !== 5 || body.shots.some((shot) => !shot || !Number.isInteger(shot.power) || shot.power < 0 || shot.power > 100 || !Number.isInteger(shot.accuracy) || shot.accuracy < 0 || shot.accuracy > 100 || typeof shot.goal !== "boolean")) {
+          !Array.isArray(body.shots) || body.shots.length !== 5 || body.shots.some((shot) => !shot || typeof shot.power !== "number" || !Number.isInteger(shot.power * 2) || shot.power < 0 || shot.power > 100 || typeof shot.accuracy !== "number" || !Number.isInteger(shot.accuracy * 2) || shot.accuracy < 0 || shot.accuracy > 100 || typeof shot.goal !== "boolean")) {
         throw issue("FIVE VALID PENALTIES REQUIRED", 400);
       }
       const summary = scoreMatchdayAttempts({ user: body.shots.map((shot) => ({ powerValue: shot.power, accuracyValue: shot.accuracy, goal: shot.goal })) });
