@@ -223,7 +223,7 @@ export function CompetitionAvailabilityModal({ status, startAt, endAt, leaderboa
   </ModalFrame>;
 }
 
-const LB_GRID = "20% 60% 20%";
+const LB_GRID = "10% 80% 10%";
 const LB_TEXT = "home-copy-bold text-[clamp(10px,2.9vw,12px)] uppercase leading-none tracking-[0.02em]";
 function LeaderboardSection({ title, children }) {
   return <div className={INNER}>
@@ -238,22 +238,23 @@ function LeaderboardHeader() {
 }
 function LeaderboardRow({ row, isUser = false }) {
   const rank = Number(row?.rank) || null;
-  // Podium colours apply to MY RANKING and TOP 5 alike. A user outside
-  // the podium gets cyan in either section (including TOP 5 places 4/5).
+  const isPodium = rank === 1 || rank === 2 || rank === 3;
   const border = rank === 1 ? "border-[#B98224]/88 ring-1 ring-[#D99A2B]/26"
     : rank === 2 ? "border-[#C8C8C8]/80 ring-1 ring-[#F5F1E8]/28"
     : rank === 3 ? "border-[#CD7F32]/80 ring-1 ring-[#CD7F32]/30"
-    : isUser ? "border-[#8FD0F2]/88 ring-1 ring-[#8FD0F2]/34"
+    : isUser ? "border-[#F7D117]/88 ring-1 ring-[#F7D117]/34"
     : "border-[#F5F1E8]/14 ring-1 ring-[#F5F1E8]/10";
   const rankColor = rank === 1 ? "text-[#D99A2B]"
     : rank === 2 ? "text-[#C8C8C8]"
     : rank === 3 ? "text-[#CD7F32]"
-    : isUser ? "text-[#8FD0F2]"
+    : isUser ? "text-[#F7D117]"
     : "text-white";
+  const usernameColor = isUser ? "text-[#F7D117]" : "text-white";
+  const scoreColor = isUser ? "text-[#F7D117]" : "text-white";
   return <div className={`grid h-[40px] items-center gap-0 rounded-[1.05rem] border bg-[#21091B]/58 px-1.5 py-0 text-[#F5F1E8] shadow-[0_6px_14px_rgba(0,0,0,0.10)] ${border}`} style={{ gridTemplateColumns: LB_GRID }}>
     <div className={`flex h-full min-w-0 items-center justify-center ${LB_TEXT} ${rankColor}`}>#{rank || "--"}</div>
-    <div className={`flex h-full min-w-0 items-center justify-center truncate text-center ${LB_TEXT} text-white`}>{row?.username || "—"}</div>
-    <div className={`flex h-full min-w-0 items-center justify-center tabular-nums ${LB_TEXT} text-[#F7D117]`}>{row?.score !== null && row?.score !== undefined && Number.isFinite(Number(row.score)) ? row.score : "—"}</div>
+    <div className={`flex h-full min-w-0 items-center justify-center truncate text-center ${LB_TEXT} ${usernameColor}`}>{row?.username || "—"}</div>
+    <div className={`flex h-full min-w-0 items-center justify-center tabular-nums ${LB_TEXT} ${scoreColor}`}>{row?.score !== null && row?.score !== undefined && Number.isFinite(Number(row.score)) ? row.score : "—"}</div>
   </div>;
 }
 
