@@ -134,8 +134,11 @@ export function CompetitionRegistrationModal({ onClose, onRegister, onStartRecov
         <div className={`${INNER} flex flex-col gap-2 p-4 text-center home-copy-bold uppercase leading-tight`}>
           {view === "recovery" ? <>
             <p className="text-[17px] text-[#F5F1E8]/60">AN ACCOUNT ALREADY EXISTS WITH THIS EMAIL ADDRESS</p>
-            <p className="text-[clamp(21px,6vw,28px)] text-[#F5F1E8]">VERIFY YOUR EMAIL TO CONTINUE</p>
-          </> : <p className="text-[17px] text-[#F5F1E8]/60">IF AN ACCOUNT EXISTS, WE'VE SENT A SIGN-IN LINK. CHECK YOUR EMAIL AND FOLLOW THE LINK.</p>}
+            <p className="text-[clamp(21px,6vw,28px)] text-[#F5F1E8]">VERIFY YOUR EMAIL</p>
+          </> : <>
+            <p className="text-[17px] text-[#F5F1E8]/60">IF AN ACCOUNT EXISTS, WE'VE SENT A SIGN-IN LINK</p>
+            <p className="text-[clamp(21px,6vw,28px)] text-[#F5F1E8]">CHECK YOUR EMAIL</p>
+          </>}
         </div>
         {view === "recovery" && <button type="button" onClick={handleRecovery} disabled={saving} className={`${BLUE_BUTTON} ${error ? "text-[clamp(12px,2.6vw,16px)]" : ""}`} aria-live="polite">{saving ? "SENDING..." : error || "SEND SIGN-IN LINK"}</button>}
         <button type="button" onClick={() => { setView("entry"); setError(""); setEmail(""); }} className="home-copy-bold self-center text-center text-[13px] uppercase text-[#8FD0F2] underline underline-offset-[3px]">USE DIFFERENT EMAIL</button>

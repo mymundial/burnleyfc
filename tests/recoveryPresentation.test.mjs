@@ -7,10 +7,12 @@ const api = readFileSync(new URL("../api/competition.js", import.meta.url), "utf
 const registration = source.split("export function CompetitionRegistrationModal")[1]?.split("export function CompetitionRecoveryLinkModal")[0];
 const verification = source.split("export function CompetitionRecoveryLinkModal")[1]?.split("export function CompetitionAvailabilityModal")[0];
 
-test("recovery copy omits full stops and confirmation is the same white size as the welcome username", () => {
+test("recovery copy has no full stops, and both prompts match the large white welcome username style", () => {
   assert.match(registration, /AN ACCOUNT ALREADY EXISTS WITH THIS EMAIL ADDRESS<\/p>/);
-  assert.match(registration, /text-\[clamp\(21px,6vw,28px\)\] text-\[#F5F1E8\]">VERIFY YOUR EMAIL TO CONTINUE<\/p>/);
-  assert.doesNotMatch(registration, /VERIFY YOUR EMAIL TO CONTINUE\./);
+  assert.match(registration, /text-\[clamp\(21px,6vw,28px\)\] text-\[#F5F1E8\]">VERIFY YOUR EMAIL<\/p>/);
+  assert.match(registration, /IF AN ACCOUNT EXISTS, WE'VE SENT A SIGN-IN LINK<\/p>/);
+  assert.match(registration, /text-\[clamp\(21px,6vw,28px\)\] text-\[#F5F1E8\]">CHECK YOUR EMAIL<\/p>/);
+  assert.doesNotMatch(registration, /SIGN-IN LINK\.|FOLLOW THE LINK|VERIFY YOUR EMAIL TO CONTINUE/);
 });
 
 test("recovery errors are temporary text within the cyan button, not a separate error line", () => {
