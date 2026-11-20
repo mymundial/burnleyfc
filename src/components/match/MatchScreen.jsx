@@ -106,6 +106,7 @@ export function MatchScreen({
             twoPlayerMode={twoPlayerMode}
             simulateAwayPenalties={simulateAwayPenalties}
             suddenDeathEnabled={!competitionMode}
+            competitionMode={competitionMode}
             stageLabelOverride={twoPlayerMode ? stageLabel : null}
             activeMatchSnapshot={activeMatchSnapshot}
             onActiveMatchSnapshot={onActiveMatchSnapshot}

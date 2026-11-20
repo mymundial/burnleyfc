@@ -55,10 +55,24 @@ test("practice keeps sudden death for tied knockouts", () => {
   );
 });
 
+test("competition mode is a hard stop even if sudden death is mistakenly enabled", () => {
+  assert.deepEqual(
+    decideMatchState({ attempts: attempts(5, 5), score: { user: 3, opponent: 3 }, fixture, suddenDeathEnabled: true, competitionMode: true }),
+    { finished: true, draw: true, winnerSide: null },
+  );
+  assert.deepEqual(
+    decideMatchState({ attempts: attempts(5, 6), score: { user: 3, opponent: 3 }, fixture, suddenDeathEnabled: true, competitionMode: true }),
+    { finished: true, draw: true, winnerSide: null },
+  );
+});
+
 test("competition flag is wired through game UI and sudden-death marker control", () => {
   const screen = readFileSync(new URL("../src/components/match/MatchScreen.jsx", import.meta.url), "utf8");
   const game = readFileSync(new URL("../src/components/match/FootballGame.jsx", import.meta.url), "utf8");
   assert.match(screen, /suddenDeathEnabled=\{!competitionMode\}/);
-  assert.match(game, /const afterRegulationTie =\s+suddenDeathEnabled &&/);
-  assert.equal((game.match(/decideMatchState\(\{ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled \}\)/g) || []).length, 3);
+  assert.match(screen, /competitionMode=\{competitionMode\}/);
+  assert.match(game, /const afterRegulationTie =\s+!competitionMode && suddenDeathEnabled &&/);
+  assert.match(game, /if \(competitionMode && currentAttempts\[side\]\.length >= GAME\.regulationPens\)/);
+  assert.match(game, /const suddenDeathMarkerSlots = competitionMode \? GAME\.regulationPens/);
+  assert.equal((game.match(/decideMatchState\(\{ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled, competitionMode \}\)/g) || []).length, 3);
 });

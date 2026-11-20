@@ -60,7 +60,7 @@ const FINAL_SHOT_OUTCOME_HOLD_MS = 900;
 const USER_TO_OPPONENT_DELAY_MS = 500;
 const MATCH_COMPLETE_MODAL_DELAY_MS = 1100;
 
-export default function FootballGame({ userTeam, opponentTeam, fixture, assets = {}, onMatchComplete, completedResult = null, endActionLabel = "MATCH COMPLETE", endActionEnabled = false, onEndAction, showChampionsBadge = false, podiumBadgeMode = null, activeCosmetics: activeCosmeticsProp = null, username = "", twoPlayerMode = false, simulateAwayPenalties = false, suddenDeathEnabled = true, stageLabelOverride = null, activeMatchSnapshot = null, onActiveMatchSnapshot = null, onFlashStyleChange = null, playerCareerStats = null, campaignAssistStars = null, introMode = false, homeMenuVisible = true, onEnterCompetition, onPractice }) {
+export default function FootballGame({ userTeam, opponentTeam, fixture, assets = {}, onMatchComplete, completedResult = null, endActionLabel = "MATCH COMPLETE", endActionEnabled = false, onEndAction, showChampionsBadge = false, podiumBadgeMode = null, activeCosmetics: activeCosmeticsProp = null, username = "", twoPlayerMode = false, simulateAwayPenalties = false, suddenDeathEnabled = true, competitionMode = false, stageLabelOverride = null, activeMatchSnapshot = null, onActiveMatchSnapshot = null, onFlashStyleChange = null, playerCareerStats = null, campaignAssistStars = null, introMode = false, homeMenuVisible = true, onEnterCompetition, onPractice }) {
   // Keep the Burnley two-player presentation (scoreboard, end modal, branding)
   // while restoring the existing automatic opponent penalty engine.
   const opponentIsHuman = twoPlayerMode && !simulateAwayPenalties;
@@ -121,7 +121,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   const isKnockoutShootout = Boolean(fixture?.requiresWinner);
   const matchFinished = phase === PHASE.FINISHED || hasCompleted;
   const afterRegulationTie =
-    suddenDeathEnabled &&
+    !competitionMode && suddenDeathEnabled &&
     isKnockoutShootout &&
     attempts.user.length >= GAME.regulationPens &&
     attempts.opponent.length >= GAME.regulationPens &&
@@ -182,7 +182,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   const nextTurnFromAttempts = (attemptSource, scoreSource = score) => {
     const nextAttempts = safeAttempts(attemptSource);
     const nextScore = safeScore(scoreSource, nextAttempts);
-    const matchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled });
+    const matchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled, competitionMode });
     if (matchState.finished) {
       return { phase: PHASE.FINISHED, shootingSide: "user", ticker: matchState.draw ? "DRAW!" : `${(matchState.winnerSide === "user" ? user.name : opponent.name).toUpperCase()} WINS!`, winnerSide: matchState.winnerSide || null, completed: true };
     }
@@ -249,7 +249,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     onActiveMatchSnapshot(snapshot);
   };
 
-  const suddenDeathMarkerSlots = Math.max(
+  const suddenDeathMarkerSlots = competitionMode ? GAME.regulationPens : Math.max(
     GAME.regulationPens,
     attempts.user.length,
     attempts.opponent.length,
@@ -392,7 +392,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   }, [fixtureSnapshotKey, user.id, opponent.id, completedResult?.fixtureId, completedResult?.matchNo, activeMatchSnapshot?.updatedAt, hasCompleted]);
 
   function finishTurn(nextAttempts, nextScore, side) {
-    const matchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled });
+    const matchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled, competitionMode });
     if (matchState.finished) {
       completionPendingRef.current = true;
       const result = buildResult({ fixture, userTeam: user, opponentTeam: opponent, score: nextScore, winnerSide: matchState.winnerSide, isDraw: matchState.draw, attempts: nextAttempts });
@@ -464,6 +464,14 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
 
   function commitShot(side, direction, power, currentScore = score, currentAttempts = attempts, plannedKeeperDirection = null, accuracy = null, accuracyOutcome = null) {
     if (hasCompleted || completionPendingRef.current) return;
+    // Defence in depth: never permit a sixth Competition Mode penalty, even if
+    // a stale or delayed callback tries to submit another shot.
+    if (competitionMode && currentAttempts[side].length >= GAME.regulationPens) {
+      if (currentAttempts.user.length >= GAME.regulationPens && currentAttempts.opponent.length >= GAME.regulationPens) {
+        finishTurn(currentAttempts, currentScore, side);
+      }
+      return;
+    }
 
     if (side === "user" || opponentIsHuman) {
       playSound(mergedAssets.sounds.userShot, 0.82);
@@ -531,7 +539,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     const nextScore = { ...currentScore, [side]: currentScore[side] + (resolved.goal ? 1 : 0) };
     const nextAttempts = { ...currentAttempts, [side]: [...currentAttempts[side], attemptRecord] };
 
-    const nextMatchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled });
+    const nextMatchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled, competitionMode });
     const isFinalShot = Boolean(nextMatchState.finished);
     if (isFinalShot) {
       completionPendingRef.current = true;
