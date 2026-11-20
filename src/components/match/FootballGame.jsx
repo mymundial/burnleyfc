@@ -148,6 +148,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   const turnTimeoutRef = useRef(null);
   const matchCompleteTimeoutRef = useRef(null);
   const completionPendingRef = useRef(false);
+  const matchCompletionDispatchedRef = useRef(false);
 
   const safeAttempts = (value) => ({
     user: Array.isArray(value?.user) ? value.user : [],
@@ -281,6 +282,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   const resetGame = () => {
     clearGameplayTimeouts();
     completionPendingRef.current = false;
+    matchCompletionDispatchedRef.current = false;
     setPhase(PHASE.DIRECTION);
     setShootingSide("user");
     setSelected(getDirection("CM"));
@@ -394,6 +396,10 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   function finishTurn(nextAttempts, nextScore, side) {
     const matchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled, competitionMode });
     if (matchState.finished) {
+      // This transition may be reached by both the shot timer and the
+      // regulation-complete fallback. Only submit the result once.
+      if (matchCompletionDispatchedRef.current) return;
+      matchCompletionDispatchedRef.current = true;
       completionPendingRef.current = true;
       const result = buildResult({ fixture, userTeam: user, opponentTeam: opponent, score: nextScore, winnerSide: matchState.winnerSide, isDraw: matchState.draw, attempts: nextAttempts });
       setPhase(PHASE.FINISHED);
@@ -462,8 +468,20 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     emitActiveSnapshot({ attempts: nextAttempts, score: nextScore, phase: PHASE.DIRECTION, shootingSide: "user", ticker: `${user.name.toUpperCase()} TO SHOOT` });
   }
 
+  // A completed five-round competition must never return to DIRECTION or
+  // AI_WAIT. If a delayed callback or state restoration leaves the controls
+  // open after regulation, finalise the recorded result without another kick.
+  useEffect(() => {
+    if (!competitionMode || completedResult || hasCompleted || phase === PHASE.SHOT) return;
+    if (attempts.user.length < GAME.regulationPens || attempts.opponent.length < GAME.regulationPens) return;
+    clearGameplayTimeouts();
+    finishTurn(attempts, score, "opponent");
+    // The finalisation function is idempotent via matchCompletionDispatchedRef.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [competitionMode, completedResult, hasCompleted, phase, attempts, score]);
+
   function commitShot(side, direction, power, currentScore = score, currentAttempts = attempts, plannedKeeperDirection = null, accuracy = null, accuracyOutcome = null) {
-    if (hasCompleted || completionPendingRef.current) return;
+    if (hasCompleted || completionPendingRef.current || matchCompletionDispatchedRef.current) return;
     // Defence in depth: never permit a sixth Competition Mode penalty, even if
     // a stale or delayed callback tries to submit another shot.
     if (competitionMode && currentAttempts[side].length >= GAME.regulationPens) {

@@ -50,9 +50,11 @@ export default function App() {
     awayTeamId: AWAY_TEAM,
     stadium: "TURF MOOR",
     venue: "TURF MOOR",
-    allowDraw: false,
-    requiresWinner: true,
-  }), []);
+    // Competition is a fixed five-round challenge, not a winner-required
+    // knockout. Practice keeps its original sudden-death rules.
+    allowDraw: mode === "competition",
+    requiresWinner: mode !== "competition",
+  }), [mode]);
 
   const resetMatch = (nextMode) => {
     submissionRequest.current += 1;

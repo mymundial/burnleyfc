@@ -76,3 +76,23 @@ test("competition flag is wired through game UI and sudden-death marker control"
   assert.match(game, /const suddenDeathMarkerSlots = competitionMode \? GAME\.regulationPens/);
   assert.equal((game.match(/decideMatchState\(\{ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled, competitionMode \}\)/g) || []).length, 3);
 });
+
+test("competition fixture allows draws, while practice keeps winner-required shootouts", () => {
+  const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  assert.match(app, /allowDraw: mode === "competition"/);
+  assert.match(app, /requiresWinner: mode !== "competition"/);
+  const competitionFixture = { requiresWinner: false, allowDraw: true };
+  assert.deepEqual(
+    decideMatchState({ attempts: attempts(5, 5), score: { user: 3, opponent: 3 }, fixture: competitionFixture, suddenDeathEnabled: true }),
+    { finished: true, draw: true, winnerSide: null },
+  );
+});
+
+test("competition game recovers after a missed final-shot transition and dispatches completion once", () => {
+  const game = readFileSync(new URL("../src/components/match/FootballGame.jsx", import.meta.url), "utf8");
+  assert.match(game, /if \(!competitionMode \|\| completedResult \|\| hasCompleted \|\| phase === PHASE\.SHOT\) return/);
+  assert.match(game, /if \(attempts\.user\.length < GAME\.regulationPens \|\| attempts\.opponent\.length < GAME\.regulationPens\) return/);
+  assert.match(game, /finishTurn\(attempts, score, "opponent"\)/);
+  assert.match(game, /if \(matchCompletionDispatchedRef\.current\) return/);
+  assert.match(game, /matchCompletionDispatchedRef\.current = true/);
+});
