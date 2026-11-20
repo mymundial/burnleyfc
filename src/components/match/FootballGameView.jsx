@@ -221,7 +221,7 @@ function ballResultAnimationClass(shot, shotActive) {
   return savedByKeeper ? "mc-ball-result-save" : "mc-ball-result-miss";
 }
 
-export function Pitch({ ballPoint, keeperPoint, shot, shotActive, activeTeam, defenderTeam, showAim, aimDirection, assets, stageLabel = "GROUP STAGE", showChampionsBadge = false, podiumBadgeMode = null, badgeTransform = null, hideMatchActors = false, pitchMowVariant = "game", showAdBoard = true, showPitchMarkings = true, twoPlayerMode = false, exportVisualTuning = false }) {
+export function Pitch({ ballPoint, keeperPoint, shot, shotActive, activeTeam, defenderTeam, showAim, aimDirection, assets, stageLabel = "GROUP STAGE", showChampionsBadge = false, podiumBadgeMode = null, badgeTransform = null, hideMatchActors = false, pitchMowVariant = "game", showAdBoard = true, showPitchMarkings = true, twoPlayerMode = false, exportVisualTuning = false, homeOverlay = null }) {
   const exportVisuals = resolveRenderedExportVisuals(exportVisualTuning);
   const goalLine = GAME.goal.top + GAME.goal.height;
   const activeBadgeMode = podiumBadgeMode || (showChampionsBadge ? PODIUM_BADGE_MODE.CHAMPION : null);
@@ -399,6 +399,7 @@ export function Pitch({ ballPoint, keeperPoint, shot, shotActive, activeTeam, de
           </div>
         </div>
       )}
+      {homeOverlay}
     </section>
   );
 }

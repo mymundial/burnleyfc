@@ -11,6 +11,7 @@ import {
 } from "../../logic/matchPresentation.js";
 import { MC_SELECTION_LAYOUT } from "../../styles/theme.js";
 import { isTerminalShareResult } from "../../logic/podium.js";
+import { CompetitionLeaderboardModal } from "../competition/CompetitionUI.jsx";
 
 const getDisplayUsername = () => "GUEST";
 
@@ -47,16 +48,27 @@ export function MatchScreen({
   playerCareerStats = null,
   campaignAssistStars = null,
   replayOnly = false,
+  introMode = false,
+  homeMenuVisible = true,
+  competitionMode = false,
+  competitionLeaderboard = null,
+  submissionState = "idle",
+  currentScore = null,
+  entrant = null,
+  onHome,
+  onEnterCompetition,
+  onPractice,
+  onRetrySubmission,
 }) {
   const [matchBusy, setMatchBusy] = useState(false);
   const shareCaptureRef = useRef(null);
   const username = useMemo(() => getDisplayUsername(), [matchResult]);
   const burnleyTeamName = "Burnley";
-  const blackburnTeamName = "Blackburn Rovers";
+  const opponentTeamName = "Preston North End";
   const isTerminalResult = isTerminalShareResult({ result: matchResult, fixture, stageLabel, podium, team: burnleyTeamName });
   const userTeam = teamToGameTeam(burnleyTeamName);
-  const opponentTeam = teamToGameTeam(blackburnTeamName);
-  const fallbackFixture = fixture ? { ...fixture, homeTeamId: burnleyTeamName, awayTeamId: blackburnTeamName } : createFallbackFixture({ team: burnleyTeamName, opponent: blackburnTeamName });
+  const opponentTeam = teamToGameTeam(opponentTeamName);
+  const fallbackFixture = fixture ? { ...fixture, homeTeamId: burnleyTeamName, awayTeamId: opponentTeamName } : createFallbackFixture({ team: burnleyTeamName, opponent: opponentTeamName });
   const completedResult = toCompletedGameResult(matchResult, fallbackFixture);
 
   return (
@@ -93,15 +105,20 @@ export function MatchScreen({
             username={username}
             twoPlayerMode={twoPlayerMode}
             simulateAwayPenalties={simulateAwayPenalties}
+            suddenDeathEnabled={!competitionMode}
             stageLabelOverride={twoPlayerMode ? stageLabel : null}
             activeMatchSnapshot={activeMatchSnapshot}
             onActiveMatchSnapshot={onActiveMatchSnapshot}
             playerCareerStats={playerCareerStats}
             campaignAssistStars={campaignAssistStars}
+            introMode={introMode}
+            homeMenuVisible={homeMenuVisible}
+            onEnterCompetition={onEnterCompetition}
+            onPractice={onPractice}
           />
         </div>
 
-        {matchResult && !modalDismissed && (
+        {matchResult && !modalDismissed && !competitionMode && (
           <EndMatchModal
             result={matchResult}
             fixture={fallbackFixture}
@@ -127,6 +144,20 @@ export function MatchScreen({
             twoPlayerMode={twoPlayerMode}
             stageLabelOverride={twoPlayerMode ? stageLabel : null}
             replayOnly={replayOnly}
+            onHome={onHome}
+            onEnterCompetition={onEnterCompetition}
+            isPractice={!competitionMode}
+          />
+        )}
+        {matchResult && competitionMode && (
+          <CompetitionLeaderboardModal
+            leaderboard={competitionLeaderboard}
+            submitState={submissionState}
+            currentScore={currentScore}
+            entrant={entrant}
+            onHome={onHome}
+            onReplay={onNextMatch}
+            onRetry={onRetrySubmission}
           />
         )}
 

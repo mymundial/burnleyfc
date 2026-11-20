@@ -37,31 +37,105 @@
   font-display: swap;
 }
 
-/* Burnley prototype display faces. Test font files are deliberately not shipped.
-   Copy your locally licensed/test files to public/fonts/national2/ to activate. */
+/* National 2 Compressed is bundled directly with this game. No local font scan. */
 @font-face {
   font-family: "National2Compressed";
-  src: local("National 2 Compressed Bold Italic"),
-       url("/fonts/national2/TestNational2Compressed-BoldItalic.otf") format("opentype");
+  src: url("/fonts/national2/TestNational2Compressed-Regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "National2Compressed";
+  src: url("/fonts/national2/TestNational2Compressed-RegularItalic.otf") format("opentype");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "National2Compressed";
+  src: url("/fonts/national2/TestNational2Compressed-Bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "National2Compressed";
+  src: url("/fonts/national2/TestNational2Compressed-BoldItalic.otf") format("opentype");
   font-style: italic;
   font-weight: 700;
   font-display: swap;
 }
 @font-face {
   font-family: "National2Compressed";
-  src: local("National 2 Compressed Black Italic"),
-       url("/fonts/national2/TestNational2Compressed-BlackItalic.otf") format("opentype");
+  src: url("/fonts/national2/TestNational2Compressed-BlackItalic.otf") format("opentype");
   font-style: italic;
   font-weight: 900;
   font-display: swap;
 }
+/* Burnley competition terms only. Supply licensed Denim WD font files in
+   public/fonts/denim/; trial font binaries are not bundled. */
+@font-face {
+  font-family: "DenimWD";
+  src: url("/fonts/denim/DenimWD-Light.otf") format("opentype");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DenimWD";
+  src: url("/fonts/denim/DenimWD-Regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* Preserve the source draft's paragraphs. Keep typography and spacing scoped
+   to the scrollable terms content; the title, modal and controls are untouched. */
+.burnley-terms-body {
+  font-family: "DenimWD", Arial, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: normal;
+}
+.burnley-terms-body > section + section {
+  margin-top: 24px;
+}
+.burnley-terms-body h3 {
+  margin: 0 0 12px;
+  font-family: "DenimWD", Arial, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 300;
+  font-size: 18px;
+  line-height: 1.35;
+  letter-spacing: normal;
+  text-transform: uppercase;
+}
+.burnley-terms-body p,
+.burnley-terms-body ol,
+.burnley-terms-body ul {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.burnley-terms-body section > :not(h3) + :not(h3) {
+  margin-top: 10px;
+}
+
 /* The LED scoreboard retains IntoDotMatrix; only non-LED bold copy changes. */
 
 .font-led {
   font-family: "IntoDotMatrix", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  /* The match container uses italic National 2. Do not let that slant the LED font. */
+  font-style: normal;
 }
 
-.home-main-font,
+.home-main-font {
+  font-family: "National2Compressed", "SportsDINBold", "SportsDINRegular", system-ui, sans-serif;
+  font-style: italic;
+  font-weight: 700;
+}
 .home-copy-regular {
   font-family: "SportsDINRegular", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -241,9 +315,12 @@ button, input, textarea, select {
   }
 }
 
-/* Burnley display headings are italic, heavily compressed and tightly tracked. */
+/* Burnley display UI: use National 2 Compressed Bold Italic (700),
+   not Black Italic (900). Keep IntoDotMatrix confined to the LED scoreboard. */
 .home-copy-bold, .font-main-bold {
-  font-weight: 900;
+  font-family: "National2Compressed", "SportsDINBold", "SportsDINRegular", system-ui, sans-serif;
+  font-style: italic;
+  font-weight: 700;
   letter-spacing: 0.035em;
 }
 

@@ -1,34 +1,20 @@
-BURNLEY FC GAME — COMPLETE PROJECT (SOURCE + ASSETS)
+BURNLEY FC VS PRESTON NORTH END — MATCHDAY GAME
 
-This ZIP contains the COMPLETE npm/Vite game project, not a patch.
-The package.json file is at the root of this ZIP.
+This is the full React/Vite project source. It contains package.json at the
+root and can be installed with:
 
-RUN THE GAME ON MAC
-1. Extract the ZIP to its own folder.
-2. Open Terminal in the extracted folder (the folder containing package.json).
-3. Run:
-   npm install
-   npm run dev
-4. Open the localhost URL shown in Terminal.
+  npm install
+  npm run dev
 
-INSTALL YOUR OWN FONTS FOR THE CORRECT APPEARANCE (RECOMMENDED)
-The original fonts and the personal-use National 2 demo font files are not
-redistributed in this ZIP. The game runs without them using fallback fonts,
-but to see the original dot-matrix scoreboard and National 2 typography:
+The former cup-final fixture has been replaced with Burnley vs Preston at
+Turf Moor. Match controls, scoreboard, replay, simulated Preston penalties,
+artwork, font CSS and the approved end-of-match design are not altered.
 
-  sh setup-local-fonts.sh ~/Downloads/efltrophy-main-burnley-buttons-meters-pass.zip ~/Downloads/national-2-compressed-font-family-1794652907-0.zip
+FONT FILES
+Retain your existing working font files in public/fonts/ when applying this
+source package. Font files are not bundled in this downloadable package.
+See FONT_SETUP.md for the expected paths.
 
-Do that inside the extracted game folder. The script reads those two ZIPs
-on YOUR Mac, installs only the needed font files locally, and does not
-upload or share them. Run it before starting the Vite server, or refresh
-once copied.
-
-If your ZIPs have different names or are stored elsewhere, provide their
-full paths as arguments to setup-local-fonts.sh.
-
-Check font licensing before publishing/deploying. The National 2 files
-are marked personal-use test fonts. This archive does not include them.
-
-This build contains the Burnley UI and gradient pass including the
-new wordmark, retained CSS pitch markings/grass, crowd art, scoreboard
-changes, end-match modal, 3D meters and goalkeeper badge reinstatement.
+The obsolete tournament and former sponsor references have been removed from
+the active fixture, assets and relevant result-sharing code. Some legacy code
+identifiers remain for compatibility with dormant generic components.

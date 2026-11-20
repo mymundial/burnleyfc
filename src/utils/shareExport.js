@@ -1,4 +1,4 @@
-export const SHARE_CANVAS_NAME = "monday-cup-result.png";
+export const SHARE_CANVAS_NAME = "burnley-fc-result.png";
 export const SHARE_EXPORT_SIZE = 2000;
 
 let html2canvasLoader = null;
@@ -621,7 +621,7 @@ export function downloadBlobFile(blob, filename = SHARE_CANVAS_NAME) {
 export async function shareNativeImage(
   blob,
   filename = SHARE_CANVAS_NAME,
-  { title = "Monday Cup", text = "My Monday Cup shirt", nativeFrame = "standard" } = {},
+  { title = "Burnley FC", text = "My Burnley FC result", nativeFrame = "standard" } = {},
 ) {
   if (!blob) throw new Error("No image blob was provided");
   if (!navigator.share)
@@ -672,7 +672,7 @@ export function printBlobImage(blob, filename = SHARE_CANVAS_NAME) {
     URL.revokeObjectURL(url);
     throw new Error("The print window was blocked");
   }
-  const html = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1" /><title>${filename.replace(/\.png$/i, ".pdf")}</title><style>@page{size:200mm 200mm;margin:0;}html,body{margin:0;background:#073B26;}main{min-height:100vh;display:grid;place-items:center;background:#073B26;}img{width:100vmin;height:100vmin;object-fit:contain;display:block;}@media print{html,body,main{width:100%;height:100%;background:#073B26;}img{width:100%;height:100%;}}</style></head><body><main><img src="${url}" alt="Monday Cup shirt poster" /></main><script>window.onload=()=>{setTimeout(()=>window.print(),250)}<\/script></body></html>`;
+  const html = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1" /><title>${filename.replace(/\.png$/i, ".pdf")}</title><style>@page{size:200mm 200mm;margin:0;}html,body{margin:0;background:#073B26;}main{min-height:100vh;display:grid;place-items:center;background:#073B26;}img{width:100vmin;height:100vmin;object-fit:contain;display:block;}@media print{html,body,main{width:100%;height:100%;background:#073B26;}img{width:100%;height:100%;}}</style></head><body><main><img src="${url}" alt="Burnley FC image" /></main><script>window.onload=()=>{setTimeout(()=>window.print(),250)}<\/script></body></html>`;
   opened.document.open();
   opened.document.write(html);
   opened.document.close();
@@ -708,7 +708,7 @@ function openBlobPreview(
   opened.document.title = filename;
   opened.document.body.style.margin = "0";
   opened.document.body.style.background = "#072D1D";
-  opened.document.body.innerHTML = `<main style="min-height:100vh;display:grid;place-items:center;background:#072D1D;padding:14px;box-sizing:border-box;"><img src="${url}" alt="Monday Cup result" style="max-width:100%;height:auto;box-shadow:0 14px 34px rgba(0,0,0,.34);" /><a href="${url}" download="${filename}" style="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);padding:12px 16px;border-radius:14px;background:#F7D117;color:#072D1D;font-family:sans-serif;font-weight:900;text-decoration:none;letter-spacing:.08em;">SAVE IMAGE</a></main>`;
+  opened.document.body.innerHTML = `<main style="min-height:100vh;display:grid;place-items:center;background:#072D1D;padding:14px;box-sizing:border-box;"><img src="${url}" alt="Burnley FC result" style="max-width:100%;height:auto;box-shadow:0 14px 34px rgba(0,0,0,.34);" /><a href="${url}" download="${filename}" style="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);padding:12px 16px;border-radius:14px;background:#F7D117;color:#072D1D;font-family:sans-serif;font-weight:900;text-decoration:none;letter-spacing:.08em;">SAVE IMAGE</a></main>`;
   setTimeout(() => URL.revokeObjectURL(url), 60000);
   return true;
 }
@@ -718,7 +718,7 @@ export function reserveShareWindow() {
   try {
     const opened = window.open("", "_blank", "noopener,noreferrer");
     if (!opened) return null;
-    opened.document.title = "Preparing Monday Cup export";
+    opened.document.title = "Preparing Burnley FC export";
     opened.document.body.style.margin = "0";
     opened.document.body.style.background = "#072D1D";
     opened.document.body.innerHTML = `<main style="min-height:100vh;display:grid;place-items:center;background:#072D1D;color:#F5F1E8;font-family:sans-serif;font-weight:900;letter-spacing:.08em;text-transform:uppercase;">Preparing image…</main>`;
@@ -733,8 +733,8 @@ export async function shareOrDownloadResult({
   buildBlob,
   filename = SHARE_CANVAS_NAME,
   previewWindow = null,
-  shareTitle = "Monday Cup Result",
-  shareText = "🏆 I just played Monday Cup!\n\nCan you beat my score?\n\n⚽ mondaycup.co.uk",
+  shareTitle = "Burnley FC Match Result",
+  shareText = "⚽ Burnley FC penalty shootout\n\nCan you beat my score?",
   nativeFrame = "standard",
 }) {
   const finalBlob = blob || (await buildBlob?.());

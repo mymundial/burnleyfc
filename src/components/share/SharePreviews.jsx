@@ -354,8 +354,8 @@ function ShareBadgeOverlay({ mode, scale = 1, x = 0, y = 0 }) {
   const mondayVisuals = getMondayCupShieldVisuals();
   const badgeMap = {
     monday: {
-      src: ASSETS.branding.mondayLogo,
-      alt: "Monday Cup",
+      src: ASSETS.branding.burnleyCrest,
+      alt: "Burnley FC crest",
       width: "99.825%",
       height: "74.415%",
       glowOuter: mondayVisuals.glowOuter,
@@ -584,7 +584,7 @@ export function PosterPreview({
             {posterLogoGlow && <div className="absolute h-[128%] w-[150%] rounded-full blur-2xl" style={{ background: hexWithAlpha(posterGlowColour, glowOpacity), filter: `brightness(${glowBrightness})` }} />}
             {posterLogoGlow && <div className="absolute h-[92%] w-[112%] rounded-full blur-xl" style={{ background: hexWithAlpha(posterGlowColour, glowOpacity * 0.72), filter: `brightness(${glowBrightness})` }} />}
             {posterLogoShadow && <div className="absolute h-[92%] w-[110%] translate-y-[12%] rounded-full bg-black blur-xl" style={{ opacity: shadowOpacity }} />}
-            <img src={ASSETS.branding.mondayLogo} alt="Monday Cup" className="relative z-[1] w-full object-contain drop-shadow-[0_16px_22px_rgba(0,0,0,0.32)]" draggable={false} />
+            <img src={ASSETS.branding.burnleyCrest} alt="Burnley FC crest" className="relative z-[1] w-full object-contain drop-shadow-[0_16px_22px_rgba(0,0,0,0.32)]" draggable={false} />
           </div>
         )}
         <div className="flex min-h-0 max-w-full flex-col items-center justify-center gap-3">
@@ -789,7 +789,7 @@ export function ShirtPosterPreview({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_14%,rgba(255,255,255,0.14),transparent_31%),linear-gradient(180deg,rgba(255,255,255,0.07),rgba(0,0,0,0.065))]" />
       {shirtShowMondayLogo && (
         <div className="absolute left-1/2 top-[10%] z-[2] grid place-items-center" style={{ height: mondayHeight, width: mondayHeight * 1.05, transform: centred(shirtMondayX, shirtMondayY) }}>
-          <img src={ASSETS.branding.mondayLogo} alt="Monday Cup" className="h-full w-full object-contain drop-shadow-[0_6px_10px_rgba(0,0,0,0.20)]" style={{ imageRendering: "auto" }} draggable={false} />
+          <img src={ASSETS.branding.burnleyCrest} alt="Burnley FC crest" className="h-full w-full object-contain drop-shadow-[0_6px_10px_rgba(0,0,0,0.20)]" style={{ imageRendering: "auto" }} draggable={false} />
         </div>
       )}
       {shirtShowName && (

@@ -21,9 +21,10 @@ import {
 } from "../../utils/shareExport.js";
 import { createMatchShareBlob } from "../../utils/matchShareCanvas.js";
 import { TEAM_RANK } from "../../data/teams.js";
+import { scoreMatchdayAttempts } from "../../logic/matchdayScoring.js";
 
-const MATCH_RESULT_SHARE_TITLE = "Monday Cup Result";
-const MATCH_RESULT_SHARE_TEXT = "🏆 ONE NATION.\n⚽ ONE TROPHY.\n👉 MONDAYCUP.CO.UK";
+const MATCH_RESULT_SHARE_TITLE = "Burnley FC Match Result";
+const MATCH_RESULT_SHARE_TEXT = "⚽ Burnley FC penalty shootout\nCan you beat my score?";
 
 const FIXTURE_VENUES = {
   73: "Los Angeles Stadium",
@@ -57,7 +58,7 @@ const FIXTURE_VENUES = {
   101: "Dallas Stadium",
   102: "Atlanta Stadium",
   103: "Miami Stadium",
-  104: "New York New Jersey Stadium",
+  104: "TURF MOOR",
 };
 
 function fixtureVenueName(matchNo, fixture = {}, result = {}) {
@@ -677,7 +678,7 @@ function getResultShareState({ result, fixture = null, podium = null, userTeam, 
     teamAMarkers,
     teamBMarkers,
     totalMarkerSlots,
-    // No obsolete EFL Trophy/podium badge on Burnley result share previews.
+    // No legacy tournament/podium badge on Burnley result share previews.
     badgeMode: twoPlayerMode ? "none" : shareBadgeModeForResult({ result, fixture, stageLabel, podium, userTeam }),
     showGoalkeeper: false,
     goalkeeperPosition: "CM",
@@ -905,7 +906,7 @@ function ChampionFireworks({ teamColour = "#0B7A3B", count = 10 }) {
   );
 }
 
-function EndMatchModal({ result, fixture, onNext, onChangeTeams, onDismiss, onOpenMenu, onOpenTrophies, hasNewTrophy = false, groupRows, qualifiedTeams, userTeam, selectedGroup, stageLabel, userForm, shareCaptureRef, podium, username = "", twoPlayerMode = false, replayOnly = false }) {
+function EndMatchModal({ result, fixture, onNext, onChangeTeams, onDismiss, onOpenMenu, onOpenTrophies, hasNewTrophy = false, groupRows, qualifiedTeams, userTeam, selectedGroup, stageLabel, userForm, shareCaptureRef, podium, username = "", twoPlayerMode = false, replayOnly = false, onHome, onEnterCompetition, isPractice = false }) {
   const isKnockout = !result.week;
   const userInKnockout = result.home === userTeam || result.away === userTeam;
   const homeIsUser = result.home === userTeam;
@@ -1023,7 +1024,7 @@ function EndMatchModal({ result, fixture, onNext, onChangeTeams, onDismiss, onOp
     try {
       const blob = shareBlob || await ensureShareBlob();
       try {
-        await shareNativeImage(blob, "monday-cup-result.png", {
+        await shareNativeImage(blob, "burnley-fc-result.png", {
           title: MATCH_RESULT_SHARE_TITLE,
           text: MATCH_RESULT_SHARE_TEXT,
           nativeFrame: "standard",
@@ -1033,7 +1034,7 @@ function EndMatchModal({ result, fixture, onNext, onChangeTeams, onDismiss, onOp
         console.warn("Native result share unavailable, falling back", nativeError);
         await shareOrDownloadResult({
           blob,
-          filename: "monday-cup-result.png",
+          filename: "burnley-fc-result.png",
           shareTitle: MATCH_RESULT_SHARE_TITLE,
           shareText: MATCH_RESULT_SHARE_TEXT,
           nativeFrame: "standard",
@@ -1052,6 +1053,13 @@ function EndMatchModal({ result, fixture, onNext, onChangeTeams, onDismiss, onOp
   const groupTitleSuffix = String(selectedGroup || result?.group || result?.groupId || "").replace(/^GROUP\s*/i, "").trim();
   const groupBoxTitle = groupTitleSuffix ? `GROUP ${groupTitleSuffix}` : "GROUP";
   const twoPlayerWinnerTitle = "BURNLEY FC";
+  const matchdayScore = scoreMatchdayAttempts(result?.attempts);
+
+  const shortDisplayTeamName = (teamName) => {
+    if (teamName === "Preston North End") return "PRESTON";
+    if (teamName === "Blackburn Rovers") return "BLACKBURN";
+    return teamName;
+  };
   const twoPlayerWinnerTeam = twoPlayerMode ? (result?.userWon ? "home" : "away") : null;
   const twoPlayerFixtureRingClass = twoPlayerMode
     ? "border-[#F7D117]/82 ring-[#F7D117]/32"
@@ -1085,7 +1093,6 @@ function EndMatchModal({ result, fixture, onNext, onChangeTeams, onDismiss, onOp
         title="Replay"
       >
         <span className="min-w-0 truncate">REPLAY</span>
-        <AdvanceIcon className="h-5 w-5 shrink-0" />
       </button>
     ) : (
       <div className="grid grid-cols-3 gap-2">
@@ -1141,6 +1148,51 @@ function EndMatchModal({ result, fixture, onNext, onChangeTeams, onDismiss, onOp
       {resultControls}
     </div>
   );
+
+  // Practice has its own compact end presentation: keep the football result,
+  // but omit competition points and all navigation except replay and close.
+  // The existing callbacks already route close to HOME and replay to PRACTICE.
+  if (isPractice && twoPlayerMode) {
+    return (
+      <div className="burnley-end-modal fixed inset-0 isolate flex items-center justify-center overflow-y-auto bg-[#160A16]/60 px-3 py-[max(14px,env(safe-area-inset-top))] backdrop-blur-[4px]" style={{ zIndex: 2147483647 }} role="dialog" aria-modal="true" aria-label="Practice result">
+        {twoPlayerHasWinner && resultHomeGoals > resultAwayGoals && (
+          <>
+            <ChampionConfetti />
+            <ChampionFireworks teamColour={championFireworkColour} />
+          </>
+        )}
+        <div className="relative z-[1] w-full max-w-[408px]">
+          <div
+            className="relative overflow-hidden rounded-[2rem] border border-[#F5F1E8]/14 text-center text-[#F5F1E8] shadow-[0_24px_54px_rgba(0,0,0,0.36),inset_0_-2px_6px_rgba(0,0,0,0.08)]"
+            style={{ backgroundColor: "#4C183B", backgroundImage: "linear-gradient(180deg, #561A42 0%, #4C183B 52%, #320F27 100%)", backgroundSize: "100% 100%" }}
+          >
+            <div className="pointer-events-none absolute inset-0 rounded-[2rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(0,0,0,0.09))]" aria-hidden="true" />
+            <div className="relative p-3">
+              <div className="mb-2 grid h-[58px] grid-cols-[40px_minmax(0,1fr)_40px] items-center gap-2">
+                <img src={ASSETS.branding.burnleyCrest} alt="Burnley FC" draggable={false} className="h-10 w-10 object-contain drop-shadow-[0_5px_8px_rgba(0,0,0,0.3)]" />
+                <h2 className="home-copy-bold truncate text-center text-[clamp(21px,6.3vw,28px)] uppercase leading-none tracking-[0.075em]">PRACTICE</h2>
+                <button type="button" onClick={onHome} className="grid h-10 w-10 place-items-center text-white active:scale-[0.96]" aria-label="Close practice and return home">
+                  <CloseIcon className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="rounded-[1.35rem] border border-[#F5F1E8]/14 bg-[#21091B]/30 p-2.5 text-[#F5F1E8] shadow-[inset_0_1px_0_rgba(245,241,232,0.06)]">
+                <div className="grid min-h-[73px] grid-rows-1 items-center">
+                  <div className="grid min-h-0 grid-cols-[30px_minmax(0,1fr)_72px_minmax(0,1fr)_30px] items-center gap-2 home-copy-bold uppercase leading-none text-[#F5F1E8]">
+                    <div className="flex items-center justify-center"><Flag team={result.home} className="h-[28px] w-[30px]" /></div>
+                    <span className={`block min-w-0 truncate text-center text-[clamp(18px,4.7vw,26px)] ${twoPlayerWinnerTeam === "home" ? "text-[#F7D117]" : "text-[#F5F1E8]"}`} title={result.home}>{result.home}</span>
+                    <span className="flex items-center justify-center tabular-nums text-[clamp(28px,7.8vw,42px)] leading-none text-[#F5F1E8]">{result.homeGoals}-{result.awayGoals}</span>
+                    <span className={`block min-w-0 truncate text-center text-[clamp(18px,4.5vw,24px)] ${twoPlayerWinnerTeam === "away" ? "text-[#F7D117]" : "text-[#F5F1E8]"}`} title={result.away}>PRESTON</span>
+                    <div className="flex items-center justify-center"><Flag team={result.away} className="h-[28px] w-[30px]" /></div>
+                  </div>
+                </div>
+              </div>
+              <button type="button" onClick={onNext} className={`${resultAdvanceButtonClass} mt-3 w-full`} aria-label="Replay practice shootout">REPLAY</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="burnley-end-modal fixed inset-0 isolate flex items-center justify-center overflow-y-auto bg-[#160A16]/60 px-3 py-[max(14px,env(safe-area-inset-top))] backdrop-blur-[4px]" style={{ zIndex: 2147483647 }}>
@@ -1216,7 +1268,7 @@ function EndMatchModal({ result, fixture, onNext, onChangeTeams, onDismiss, onOp
                           <div className="flex items-center justify-center"><Flag team={result.home} className="h-[28px] w-[30px]" /></div>
                           <span className={`block min-w-0 truncate text-center text-[clamp(18px,4.7vw,26px)] ${twoPlayerMode ? (twoPlayerWinnerTeam === "home" ? "text-[#F7D117]" : "text-[#F5F1E8]") : homeIsUser ? "text-[#F7D117]" : "text-[#F5F1E8]"}`} style={{ ...tightTeamStyle(result.home) }} title={result.home}>{result.home}</span>
                           <span className="flex items-center justify-center tabular-nums text-[clamp(28px,7.8vw,42px)] leading-none text-[#F5F1E8]">{result.homeGoals}-{result.awayGoals}</span>
-                          <span className={`block min-w-0 truncate text-center text-[clamp(18px,4.5vw,24px)] ${twoPlayerMode ? (twoPlayerWinnerTeam === "away" ? "text-[#F7D117]" : "text-[#F5F1E8]") : awayIsUser ? "text-[#F7D117]" : "text-[#F5F1E8]"}`} style={{ ...tightTeamStyle(result.away) }} title={result.away}>{twoPlayerMode ? "BLACKBURN" : result.away}</span>
+                          <span className={`block min-w-0 truncate text-center text-[clamp(18px,4.5vw,24px)] ${twoPlayerMode ? (twoPlayerWinnerTeam === "away" ? "text-[#F7D117]" : "text-[#F5F1E8]") : awayIsUser ? "text-[#F7D117]" : "text-[#F5F1E8]"}`} style={{ ...tightTeamStyle(result.away) }} title={result.away}>{twoPlayerMode ? "PRESTON" : shortDisplayTeamName(result.away)}</span>
                           <div className="flex items-center justify-center"><Flag team={result.away} className="h-[28px] w-[30px]" /></div>
                         </div>
                         {!twoPlayerMode && (
@@ -1225,6 +1277,18 @@ function EndMatchModal({ result, fixture, onNext, onChangeTeams, onDismiss, onOp
                           </div>
                         )}
                       </div>
+                      {twoPlayerMode && (
+                        <div className="mt-2 flex w-full justify-center" aria-label={`Challenge score ${matchdayScore.points} out of ${matchdayScore.maxPoints}`}>
+                          <div
+                            className="flex h-[40px] min-w-[140px] items-center justify-center rounded-[18px] border border-[#9A792B] bg-[#071B15] px-4 shadow-[0_0_0_2px_rgba(8,65,42,0.9),inset_0_0_10px_rgba(247,209,23,0.06)]"
+                            title={`Challenge score: ${matchdayScore.points} / ${matchdayScore.maxPoints}`}
+                          >
+                            <span className="font-led text-[clamp(23px,6vw,29px)] leading-none tracking-[0.06em] text-[#F7D117]" style={{ fontFamily: '"IntoDotMatrix", monospace', fontStyle: "normal", fontWeight: 400, textShadow: "0 0 6px rgba(247,209,23,0.17)" }}>
+                              {matchdayScore.points}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <>

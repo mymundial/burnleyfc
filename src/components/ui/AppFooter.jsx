@@ -58,7 +58,7 @@ export default function AppFooter({ fixed = false, className = '', onFeedback = 
     <footer
       className={`${shellClass} ${className}`}
       style={{ height: `calc(${APP_FOOTER_HEIGHT_PX}px + env(safe-area-inset-bottom))` }}
-      aria-label="Monday Cup footer"
+      aria-label="Burnley FC footer"
     >
       <div className="relative h-full w-full overflow-visible">
         <div

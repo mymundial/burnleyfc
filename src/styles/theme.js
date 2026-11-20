@@ -1,5 +1,5 @@
 // src/styles/theme.js
-// Monday Cup shared design tokens. Change repeated spacing/colour/radius here first.
+// Shared match UI design tokens. Change repeated spacing/colour/radius here first.
 
 export const MC_COLORS = {
   greenDark: '#0B2545',

@@ -12,8 +12,8 @@ const SCOREBOARD_SUBTLE_GLOW_SOFT = "rgba(247,209,23,0.08)";
 const IVORY = "#F5F1E8";
 const DARK_GREEN = "#072D1D";
 const PITCH_GREEN = "#0d6c3d";
-const MONDAY_CUP_AD_SRC = "/assets/branding/jersey-mikes-subs.png";
-const MONDAY_CUP_PITCH_BADGE_SRC = "/assets/branding/efl-trophy-badge.png";
+const VERTU_AD_SRC = ASSETS.branding.vertuAd;
+const BURNLEY_CREST_SRC = ASSETS.branding.burnleyCrest;
 const CHAMPION_PITCH_BADGE_SRC = "/assets/badges/mc-champs2.webp";
 const RUNNER_UP_PITCH_BADGE_SRC = "/assets/badges/mc-runner-up.webp";
 const THIRD_PLACE_PITCH_BADGE_SRC = "/assets/badges/mc-third-place.webp";
@@ -221,7 +221,7 @@ async function loadCanvasImage(src) {
 
   // Same-origin public assets are fetched to blob first. This is the safest path
   // for iOS/Safari canvas exports and avoids CORS/decode gaps for pitch badges
-  // and the mondaycup.co.uk ad-board logo.
+  // and the Vertu ad-board logo.
   const fetched = await imageFromFetchedBlob(url);
   if (fetched) return fetched;
 
@@ -992,7 +992,7 @@ function drawGoal(ctx, x, y, width, height, visuals = MATCH_RESULT_EXPORT_VISUAL
 
 function drawAdvertisingBoard(ctx, image, x, y, width, height, visuals = MATCH_RESULT_EXPORT_VISUALS.fallback) {
   ctx.save();
-  ctx.fillStyle = "#134a7c";
+  ctx.fillStyle = "#4C183B";
   ctx.fillRect(x, y, width, height);
   const grad = ctx.createLinearGradient(0, y, 0, y + height);
   grad.addColorStop(0, "rgba(255,255,255,0.045)");
@@ -1030,7 +1030,7 @@ function drawAdvertisingBoard(ctx, image, x, y, width, height, visuals = MATCH_R
     ctx.globalAlpha = 0.42;
     ctx.shadowColor = "rgba(245,241,232,0.18)";
     ctx.shadowBlur = Math.max(7, width * 0.008);
-    drawCenteredText(ctx, "JERSEY MIKE'S SUBS", cx, cy, {
+    drawCenteredText(ctx, "VERTU", cx, cy, {
       family: fontFamilyFor("bold"),
       size: Math.max(22, height * 0.34),
       weight: 900,
@@ -1371,8 +1371,8 @@ async function loadAssets(userTeam, opponentTeam) {
   const [flagA, flagB, adBoard, mondayLogo, champion, runnerUp, third, goalkeeper, ball] = await Promise.all([
     loadCanvasImage(userTeam.flag),
     loadCanvasImage(opponentTeam.flag),
-    loadCanvasImage(MONDAY_CUP_AD_SRC),
-    loadCanvasImage(MONDAY_CUP_PITCH_BADGE_SRC),
+    loadCanvasImage(VERTU_AD_SRC),
+    loadCanvasImage(BURNLEY_CREST_SRC),
     loadCanvasImage(CHAMPION_PITCH_BADGE_SRC),
     loadCanvasImage(RUNNER_UP_PITCH_BADGE_SRC),
     loadCanvasImage(THIRD_PLACE_PITCH_BADGE_SRC),
@@ -1419,7 +1419,7 @@ export async function createMatchShareBlob(props = {}, options = {}) {
   // Mobile Safari/html-to-image can report a successful pitch capture while dropping
   // nested image assets inside the pitch layer (badge/logo/ad-board). The scoreboard
   // still uses DOM capture for pixel-perfect text, but the pitch is rendered directly
-  // to canvas so the badge and mondaycup.co.uk board are always present in exports.
+  // to canvas so the badge and Vertu board are always present in exports.
   drawPitchArea(ctx, normalisedProps, assets, boardH, size, size - boardH);
 
   if (props.borderEnabled) {

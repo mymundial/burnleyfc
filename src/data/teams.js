@@ -81,10 +81,9 @@ export const TEAM_COLOURS = {
   Croatia: { first: "#F60707", second: "#111111", third: "#23408E" },
   Ghana: { first: "#FFC000", second: "#111111", third: "#111111" },
   Panama: { first: "#EB1531", second: "#FFFFFF", third: "#005293" },
-  "Leyton Orient": { first: "#A43338", second: "#FFFFFF", third: "#FFFFFF" },
-  "Stockport County": { first: "#1D4ED8", second: "#FFFFFF", third: "#FFFFFF" },
   Burnley: { first: "#5F0041", second: "#7EC6F1", third: "#F5F1E8" },
   "Blackburn Rovers": { first: "#FFFFFF", second: "#009EE0", third: "#0B2F6B" },
+  "Preston North End": { first: "#FFFFFF", second: "#0B2F6B", third: "#4DB7FF" },
 };
 
 export const TEAM_THEME = Object.fromEntries(
@@ -106,7 +105,7 @@ export const FLAG_CC = {
   Mexico: "mx", "South Africa": "za", "South Korea": "kr", "Czech Republic": "cz", Canada: "ca", "Bosnia-Herzegovina": "ba", Qatar: "qa", Switzerland: "ch", Brazil: "br", Morocco: "ma", Haiti: "ht", Scotland: "gb-sct", "United States": "us", Paraguay: "py", Australia: "au", Turkey: "tr", Germany: "de", Curacao: "cw", "Ivory Coast": "ci", Ecuador: "ec", Netherlands: "nl", Japan: "jp", Sweden: "se", Tunisia: "tn", Belgium: "be", Egypt: "eg", Iran: "ir", "New Zealand": "nz", Spain: "es", "Cape Verde": "cv", "Saudi Arabia": "sa", Uruguay: "uy", France: "fr", Senegal: "sn", Iraq: "iq", Norway: "no", Argentina: "ar", Algeria: "dz", Austria: "at", Jordan: "jo", Portugal: "pt", "DR Congo": "cd", Uzbekistan: "uz", Colombia: "co", England: "gb-eng", Croatia: "hr", Ghana: "gh", Panama: "pa",
 };
 
-export const TEAM_CODE = { Mexico: "MEX", "South Africa": "RSA", "South Korea": "KOR", "Czech Republic": "CZE", Canada: "CAN", "Bosnia-Herzegovina": "BIH", Qatar: "QAT", Switzerland: "SUI", Brazil: "BRA", Morocco: "MAR", Haiti: "HAI", Scotland: "SCO", "United States": "USA", Paraguay: "PAR", Australia: "AUS", Turkey: "TUR", Germany: "GER", Curacao: "CUW", "Ivory Coast": "CIV", Ecuador: "ECU", Netherlands: "NED", Japan: "JPN", Sweden: "SWE", Tunisia: "TUN", Belgium: "BEL", Egypt: "EGY", Iran: "IRN", "New Zealand": "NZL", Spain: "ESP", "Cape Verde": "CPV", "Saudi Arabia": "KSA", Uruguay: "URU", France: "FRA", Senegal: "SEN", Iraq: "IRQ", Norway: "NOR", Argentina: "ARG", Algeria: "ALG", Austria: "AUT", Jordan: "JOR", Portugal: "POR", "DR Congo": "COD", Uzbekistan: "UZB", Colombia: "COL", England: "ENG", Croatia: "CRO", Ghana: "GHA", Panama: "PAN", "Leyton Orient": "LEY", "Stockport County": "STO", Burnley: "BUR", "Blackburn Rovers": "BBN" };
+export const TEAM_CODE = { Mexico: "MEX", "South Africa": "RSA", "South Korea": "KOR", "Czech Republic": "CZE", Canada: "CAN", "Bosnia-Herzegovina": "BIH", Qatar: "QAT", Switzerland: "SUI", Brazil: "BRA", Morocco: "MAR", Haiti: "HAI", Scotland: "SCO", "United States": "USA", Paraguay: "PAR", Australia: "AUS", Turkey: "TUR", Germany: "GER", Curacao: "CUW", "Ivory Coast": "CIV", Ecuador: "ECU", Netherlands: "NED", Japan: "JPN", Sweden: "SWE", Tunisia: "TUN", Belgium: "BEL", Egypt: "EGY", Iran: "IRN", "New Zealand": "NZL", Spain: "ESP", "Cape Verde": "CPV", "Saudi Arabia": "KSA", Uruguay: "URU", France: "FRA", Senegal: "SEN", Iraq: "IRQ", Norway: "NOR", Argentina: "ARG", Algeria: "ALG", Austria: "AUT", Jordan: "JOR", Portugal: "POR", "DR Congo": "COD", Uzbekistan: "UZB", Colombia: "COL", England: "ENG", Croatia: "CRO", Ghana: "GHA", Panama: "PAN", Burnley: "BUR", "Blackburn Rovers": "BBN", "Preston North End": "PNE" };
 
 export function getTeamTheme(team) {
   return TEAM_THEME[team] || {

@@ -134,7 +134,7 @@ function milestoneForResult(result) {
   }
 
   if (status === RESULT_STATUS.CHAMPION) {
-    return { id: "win-monday-cup", label: "Win Monday Cup", points: LEADERBOARD_POINTS.WIN_MONDAY_CUP };
+    return { id: "win-monday-cup", label: "Win the competition", points: LEADERBOARD_POINTS.WIN_MONDAY_CUP };
   }
 
   return null;

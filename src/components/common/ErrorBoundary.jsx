@@ -11,7 +11,7 @@ export class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("Monday Cup render error", error, errorInfo);
+    console.error("Burnley FC render error", error, errorInfo);
   }
 
   handleReset = () => {
@@ -27,7 +27,7 @@ export class ErrorBoundary extends React.Component {
         <section className="w-full max-w-sm rounded-[2rem] bg-[#06361F] p-6 text-center shadow-2xl ring-1 ring-[#F5F1E8]/15">
           <div className="home-copy-bold text-[28px] uppercase leading-none">Something broke</div>
           <p className="home-copy-regular mt-3 text-[12px] uppercase leading-relaxed tracking-[0.12em] text-[#F5F1E8]/70">
-            Monday Cup hit a temporary matchday error. Reset the screen and continue testing.
+            Burnley FC hit a temporary matchday error. Reset the screen and continue testing.
           </p>
           {this.state.error?.message ? (
             <pre className="mt-4 overflow-auto rounded-2xl bg-black/25 p-3 text-left text-[10px] normal-case text-[#F7D117]/90">

@@ -46,8 +46,11 @@ import {
 import { getPodiumBadgeVisuals } from "../../logic/matchVisuals.js";
 import { PODIUM_BADGE_MODE } from "../../logic/resultStatus.js";
 import { playerCareerStarRating } from "../../logic/playerCareer.js";
+import { meterValueAtTime } from "../../logic/meterTiming.js";
+import { precisionPoints, scoreMatchdayAttempts, SCORING_SHOTS } from "../../logic/matchdayScoring.js";
 
 import { ControlOverlay, Pitch, TemporaryMatchButtons } from "./FootballGameView.jsx";
+import { CompetitionHomeOverlay } from "../competition/CompetitionUI.jsx";
 export { MatchPitchPreview } from "./FootballGameView.jsx";
 
 const USER_SHOT_RESULT_DELAY_MS = 150;
@@ -57,7 +60,7 @@ const FINAL_SHOT_OUTCOME_HOLD_MS = 900;
 const USER_TO_OPPONENT_DELAY_MS = 500;
 const MATCH_COMPLETE_MODAL_DELAY_MS = 1100;
 
-export default function FootballGame({ userTeam, opponentTeam, fixture, assets = {}, onMatchComplete, completedResult = null, endActionLabel = "MATCH COMPLETE", endActionEnabled = false, onEndAction, showChampionsBadge = false, podiumBadgeMode = null, activeCosmetics: activeCosmeticsProp = null, username = "", twoPlayerMode = false, simulateAwayPenalties = false, stageLabelOverride = null, activeMatchSnapshot = null, onActiveMatchSnapshot = null, onFlashStyleChange = null, playerCareerStats = null, campaignAssistStars = null }) {
+export default function FootballGame({ userTeam, opponentTeam, fixture, assets = {}, onMatchComplete, completedResult = null, endActionLabel = "MATCH COMPLETE", endActionEnabled = false, onEndAction, showChampionsBadge = false, podiumBadgeMode = null, activeCosmetics: activeCosmeticsProp = null, username = "", twoPlayerMode = false, simulateAwayPenalties = false, suddenDeathEnabled = true, stageLabelOverride = null, activeMatchSnapshot = null, onActiveMatchSnapshot = null, onFlashStyleChange = null, playerCareerStats = null, campaignAssistStars = null, introMode = false, homeMenuVisible = true, onEnterCompetition, onPractice }) {
   // Keep the Burnley two-player presentation (scoreboard, end modal, branding)
   // while restoring the existing automatic opponent penalty engine.
   const opponentIsHuman = twoPlayerMode && !simulateAwayPenalties;
@@ -94,14 +97,12 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   const accuracySweepMsRef = useRef(DEFAULT_ACCURACY_SWEEP_MS);
   const powerValueRef = useRef(0);
   const powerFrameRef = useRef(null);
-  const powerLastFrameRef = useRef(0);
-  const powerDirectionRef = useRef(1);
+  const powerStartMsRef = useRef(null);
   const powerFillRef = useRef(null);
   const accuracyFillRef = useRef(null);
   const accuracyValueRef = useRef(0);
   const accuracyFrameRef = useRef(null);
-  const accuracyLastFrameRef = useRef(0);
-  const accuracyDirectionRef = useRef(1);
+  const accuracyStartMsRef = useRef(null);
   const [score, setScore] = useState({ user: 0, opponent: 0 });
   const [attempts, setAttempts] = useState({ user: [], opponent: [] });
   const [shot, setShot] = useState(null);
@@ -120,6 +121,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   const isKnockoutShootout = Boolean(fixture?.requiresWinner);
   const matchFinished = phase === PHASE.FINISHED || hasCompleted;
   const afterRegulationTie =
+    suddenDeathEnabled &&
     isKnockoutShootout &&
     attempts.user.length >= GAME.regulationPens &&
     attempts.opponent.length >= GAME.regulationPens &&
@@ -180,7 +182,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   const nextTurnFromAttempts = (attemptSource, scoreSource = score) => {
     const nextAttempts = safeAttempts(attemptSource);
     const nextScore = safeScore(scoreSource, nextAttempts);
-    const matchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture });
+    const matchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled });
     if (matchState.finished) {
       return { phase: PHASE.FINISHED, shootingSide: "user", ticker: matchState.draw ? "DRAW!" : `${(matchState.winnerSide === "user" ? user.name : opponent.name).toUpperCase()} WINS!`, winnerSide: matchState.winnerSide || null, completed: true };
     }
@@ -218,6 +220,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
       opponentName: opponent.name,
       score: sourceScore,
       attempts: sourceAttempts,
+      matchdayScore: scoreMatchdayAttempts(sourceAttempts),
       phase: overrides.phase || turn.phase,
       shootingSide: overrides.shootingSide || turn.shootingSide,
       ticker: overrides.ticker || turn.ticker,
@@ -291,6 +294,8 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     setAccuracyRunning(false);
     setAccuracySweepMs(DEFAULT_ACCURACY_SWEEP_MS);
     accuracySweepMsRef.current = DEFAULT_ACCURACY_SWEEP_MS;
+    powerStartMsRef.current = null;
+    accuracyStartMsRef.current = null;
     if (powerFrameRef.current) cancelAnimationFrame(powerFrameRef.current);
     if (accuracyFrameRef.current) cancelAnimationFrame(accuracyFrameRef.current);
     setScore({ user: 0, opponent: 0 });
@@ -387,7 +392,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   }, [fixtureSnapshotKey, user.id, opponent.id, completedResult?.fixtureId, completedResult?.matchNo, activeMatchSnapshot?.updatedAt, hasCompleted]);
 
   function finishTurn(nextAttempts, nextScore, side) {
-    const matchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture });
+    const matchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled });
     if (matchState.finished) {
       completionPendingRef.current = true;
       const result = buildResult({ fixture, userTeam: user, opponentTeam: opponent, score: nextScore, winnerSide: matchState.winnerSide, isDraw: matchState.draw, attempts: nextAttempts });
@@ -504,6 +509,8 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
       accuracy: safeAccuracy,
       accuracyValue: safeAccuracy,
       accuracyPoints: side === "user" ? meterPoints(safeAccuracy, 50) : 0,
+      matchdayPoints: side === "user" && shotNumber <= SCORING_SHOTS
+        ? precisionPoints(safePower) + precisionPoints(safeAccuracy) : 0,
       targetZone: isPowerInTargetZone(safePower, activeCosmetics, playerCareerStars),
       accuracyTargetZone: safeAccuracy !== null && isAccuracyInTargetZone(safeAccuracy, activeCosmetics, playerCareerStars),
       accuracyOutcome,
@@ -524,7 +531,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     const nextScore = { ...currentScore, [side]: currentScore[side] + (resolved.goal ? 1 : 0) };
     const nextAttempts = { ...currentAttempts, [side]: [...currentAttempts[side], attemptRecord] };
 
-    const nextMatchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture });
+    const nextMatchState = decideMatchState({ attempts: nextAttempts, score: nextScore, fixture, suddenDeathEnabled });
     const isFinalShot = Boolean(nextMatchState.finished);
     if (isFinalShot) {
       completionPendingRef.current = true;
@@ -590,15 +597,6 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     if (commitState) setAccuracyValue(safeAccuracy);
   }
 
-  function readVisualMeterValue(fillRef, fallbackValue) {
-    const rawDatasetValue = fillRef?.current?.dataset?.meterValue;
-    const parsedDatasetValue = Number.parseFloat(String(rawDatasetValue || ""));
-    if (Number.isFinite(parsedDatasetValue)) return clamp(parsedDatasetValue, 0, 100);
-    const rawLeft = fillRef?.current?.style?.left;
-    const parsed = Number.parseFloat(String(rawLeft || "").replace("%", ""));
-    return Number.isFinite(parsed) ? clamp(parsed, 0, 100) : clamp(Number(fallbackValue) || 0, 0, 100);
-  }
-
   function stopPowerFrame() {
     if (powerFrameRef.current) {
       cancelAnimationFrame(powerFrameRef.current);
@@ -616,56 +614,29 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
   function startPowerMeter() {
     stopPowerFrame();
     setPowerCharging(true);
-    powerDirectionRef.current = 1;
-    powerLastFrameRef.current = performance.now();
+    const start = performance.now();
+    powerStartMsRef.current = start;
     setPowerVisual(0, true);
 
-    const sweepPerMs = 100 / Math.max(1, POWER_SWEEP_MS / 2);
     const tick = (now) => {
-      const delta = Math.min(Math.max(now - powerLastFrameRef.current, 0), 34);
-      powerLastFrameRef.current = now;
-      let next = powerValueRef.current + powerDirectionRef.current * delta * sweepPerMs;
-
-      if (next >= 100) {
-        next = 100;
-        powerDirectionRef.current = -1;
-      } else if (next <= 0) {
-        next = 0;
-        powerDirectionRef.current = 1;
-      }
-
-      setPowerVisual(next);
+      setPowerVisual(meterValueAtTime(start, now, POWER_SWEEP_MS));
       powerFrameRef.current = requestAnimationFrame(tick);
     };
-
     powerFrameRef.current = requestAnimationFrame(tick);
   }
 
   function startAccuracyMeter() {
     stopAccuracyFrame();
     setAccuracyRunning(true);
-    accuracyDirectionRef.current = 1;
-    accuracyLastFrameRef.current = performance.now();
+    const start = performance.now();
+    accuracyStartMsRef.current = start;
+    const sweep = accuracySweepMsRef.current;
     setAccuracyVisual(0, true);
 
-    const sweepPerMs = 100 / Math.max(1, accuracySweepMsRef.current / 2);
     const tick = (now) => {
-      const delta = Math.min(Math.max(now - accuracyLastFrameRef.current, 0), 34);
-      accuracyLastFrameRef.current = now;
-      let next = accuracyValueRef.current + accuracyDirectionRef.current * delta * sweepPerMs;
-
-      if (next >= 100) {
-        next = 100;
-        accuracyDirectionRef.current = -1;
-      } else if (next <= 0) {
-        next = 0;
-        accuracyDirectionRef.current = 1;
-      }
-
-      setAccuracyVisual(next);
+      setAccuracyVisual(meterValueAtTime(start, now, sweep));
       accuracyFrameRef.current = requestAnimationFrame(tick);
     };
-
     accuracyFrameRef.current = requestAnimationFrame(tick);
   }
 
@@ -674,13 +645,12 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     event?.preventDefault?.();
     event?.stopPropagation?.();
 
+    // Sample the elapsed-time marker at the tap, not the last paint frame.
+    const tappedAt = performance.now();
+    const finalPower = displayedMeterValue(meterValueAtTime(powerStartMsRef.current, tappedAt, POWER_SWEEP_MS));
     stopPowerFrame();
     setPowerCharging(false);
-
-    // Golden Boot expands the visible power sweet spot. Use the same visual
-    // needle position the player sees, then snap it to the displayed value
-    // before judging the upgraded/standard power zone and accuracy speed.
-    const finalPower = displayedMeterValue(readVisualMeterValue(powerFillRef, powerValueRef.current));
+    setPowerVisual(finalPower);
     powerValueRef.current = finalPower;
     setPowerValue(finalPower);
 
@@ -690,7 +660,6 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     accuracySweepMsRef.current = nextAccuracySpeed;
     setAccuracyValue(0);
     accuracyValueRef.current = 0;
-    accuracyDirectionRef.current = 1;
     setPhase(PHASE_ACCURACY);
   }
 
@@ -699,13 +668,12 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
     event?.preventDefault?.();
     event?.stopPropagation?.();
 
+    // Capture precise tap time, independent of requestAnimationFrame timing.
+    const tappedAt = performance.now();
+    const finalAccuracy = displayedMeterValue(meterValueAtTime(accuracyStartMsRef.current, tappedAt, accuracySweepMsRef.current));
     stopAccuracyFrame();
     setAccuracyRunning(false);
-
-    // Use the meter needle's visual position as the source of truth, then snap
-    // to the same displayed integer value used by the outcome bands. This keeps
-    // mobile touch timing, the green target band, and shot results aligned.
-    const finalAccuracy = displayedMeterValue(readVisualMeterValue(accuracyFillRef, accuracyValueRef.current));
+    setAccuracyVisual(finalAccuracy);
     accuracyValueRef.current = finalAccuracy;
     setAccuracyValue(finalAccuracy);
 
@@ -867,10 +835,10 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
           80%, 100% { background: var(--goal-bg); color: var(--goal-fg); }
         }
       `}</style>
-      <Scoreboard userTeam={user} opponentTeam={opponent} score={score} attempts={attempts} ticker={ticker} tickerStyle={currentTickerStyle} tickerTeam={tickerTeam()} stageLabel="CHAMPIONSHIP" totalMarkerSlots={suddenDeathMarkerSlots} username={twoPlayerMode ? "TURF MOOR" : username} usernameEnabled={twoPlayerMode || Boolean(username)} usernameTone="yellow" />
+      <Scoreboard userTeam={user} opponentTeam={opponent} score={score} attempts={attempts} ticker={introMode ? "PLAY TO WIN A BURNLEY FC E-GIFT CARD!" : ticker} tickerStyle={currentTickerStyle} tickerTeam={tickerTeam()} stageLabel="CHAMPIONSHIP" totalMarkerSlots={suddenDeathMarkerSlots} username={twoPlayerMode ? "TURF MOOR" : username} usernameEnabled={twoPlayerMode || Boolean(username)} usernameTone="yellow" />
       {/* Launch build: temporary result/debug buttons hidden. */}
-      <Pitch ballPoint={ballPoint} keeperPoint={keeperPoint} shot={shot} shotActive={shotActive} activeTeam={activeTeam} defenderTeam={defenderTeam} showAim={showAim} aimDirection={aimDirection} assets={mergedAssets} stageLabel={stageLabel} showChampionsBadge={showChampionsBadge} podiumBadgeMode={podiumBadgeMode} hideMatchActors={hideMatchActors} twoPlayerMode={twoPlayerMode} />
-      <ControlOverlay
+      <Pitch ballPoint={ballPoint} keeperPoint={keeperPoint} shot={shot} shotActive={shotActive} activeTeam={activeTeam} defenderTeam={defenderTeam} showAim={!introMode && showAim} aimDirection={aimDirection} assets={mergedAssets} stageLabel={stageLabel} showChampionsBadge={showChampionsBadge} podiumBadgeMode={podiumBadgeMode} hideMatchActors={introMode || hideMatchActors} twoPlayerMode={twoPlayerMode} homeOverlay={introMode ? <CompetitionHomeOverlay onCompetition={onEnterCompetition} onPractice={onPractice} showButtons={homeMenuVisible} /> : null} />
+      {!introMode && <ControlOverlay
         phase={phase}
         selected={selected}
         setSelected={setSelected}
@@ -889,7 +857,7 @@ export default function FootballGame({ userTeam, opponentTeam, fixture, assets =
         endActionLabel={endActionLabel}
         endActionEnabled={endActionEnabled}
         onEndAction={onEndAction}
-      />
+      />}
     </div>
   );
 }

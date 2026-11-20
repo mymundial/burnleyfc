@@ -1,10 +1,12 @@
 import goalMp3 from "../assets/goal.mp3";
 import missMp3 from "../assets/miss.mp3";
 const branding = {
-  mondayLogo: "/assets/branding/efl-trophy-badge.png",
-  mondayCupAd: "/assets/branding/jersey-mikes-subs.png",
-  mondayFlat: "/assets/branding/efl-trophy-badge.png",
-  logo2: "/assets/branding/efl-trophy-badge.png",
+  burnleyCrest: "/assets/branding/burnley-club-logo.png",
+  vertuAd: "/assets/branding/vertu-logo.png",
+  mondayLogo: "/assets/branding/burnley-club-logo.png",
+  mondayCupAd: "/assets/branding/vertu-logo.png",
+  mondayFlat: "/assets/branding/burnley-club-logo.png",
+  logo2: "/assets/branding/burnley-club-logo.png",
   myMundialLogo: "/assets/branding/brothers.webp",
   brothersDark: "/assets/branding/brothers2.webp",
   trophyAd: "/assets/branding/trophy-ad.png",

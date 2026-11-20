@@ -1,5 +1,6 @@
 import { ASSETS } from "../data/assets.js";
 import { MC_SELECTION_LAYOUT } from "../styles/theme.js";
+import { scoreMatchdayAttempts } from "./matchdayScoring.js";
 
 export const DEFAULT_ASSETS = {
   logo: ASSETS.branding.mondayCupAd,
@@ -563,6 +564,7 @@ export function buildResult({ fixture, userTeam, opponentTeam, score, winnerSide
     isDraw,
     finalMatchOutcome,
     attempts: enrichedAttempts,
+    matchdayScore: scoreMatchdayAttempts(enrichedAttempts),
     userShotEvents,
     opponentShotEvents,
   };

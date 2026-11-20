@@ -19,7 +19,7 @@ export default function AppTopBar({
   onMenuButtonClick,
   menu,
   logoSrc = ASSETS.branding.mondayLogo,
-  logoAlt = 'Monday Cup',
+  logoAlt = 'Burnley FC',
   className = '',
   style,
   titleClassName = '',

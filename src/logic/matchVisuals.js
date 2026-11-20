@@ -36,7 +36,7 @@ export function normaliseThirdPlaceCopy(value) {
 export function getMondayCupShieldVisuals() {
   return {
     src: MONDAY_CUP_SHIELD_SRC,
-    alt: "EFL Trophy",
+    alt: "Burnley FC crest",
     ...SELECTION_PITCH_BADGE_GLOW,
     pitchScale: MONDAY_CUP_SHIELD_PITCH_SCALE,
   };
@@ -57,7 +57,7 @@ export function getPodiumBadgeVisuals(mode, options = {}) {
   if (mode === PODIUM_BADGE_MODE.RUNNER_UP) {
     return {
       src: RUNNER_UP_BADGE_SRC,
-      alt: "EFL Trophy",
+      alt: "Runner-up",
       ...SELECTION_PITCH_BADGE_GLOW,
       pitchScale: PODIUM_BADGE_PITCH_SCALE,
     };
@@ -65,7 +65,7 @@ export function getPodiumBadgeVisuals(mode, options = {}) {
   if (mode === PODIUM_BADGE_MODE.THIRD) {
     return {
       src: THIRD_PLACE_BADGE_SRC,
-      alt: "EFL Trophy",
+      alt: "Third place",
       ...SELECTION_PITCH_BADGE_GLOW,
       pitchScale: PODIUM_BADGE_PITCH_SCALE,
     };
@@ -73,7 +73,7 @@ export function getPodiumBadgeVisuals(mode, options = {}) {
   if (mode === PODIUM_BADGE_MODE.CHAMPION) {
     return {
       src: CHAMPIONS_BADGE_SRC,
-      alt: "EFL Trophy",
+      alt: "Champion",
       ...SELECTION_PITCH_BADGE_GLOW,
       pitchScale: PODIUM_BADGE_PITCH_SCALE,
     };
